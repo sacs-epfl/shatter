@@ -1,0 +1,3 @@
+[submodule "decentralizepy"]
+	path = decentralizepy
+	url = git@github.com:sacs-epfl/decentralizepy.git

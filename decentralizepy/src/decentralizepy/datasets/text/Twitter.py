@@ -1,0 +1,474 @@
+import json
+import logging
+import os
+from collections import defaultdict
+
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn.functional as F
+from torch import nn
+from torch.utils.data import DataLoader
+from tqdm.auto import tqdm
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+from decentralizepy.datasets.Dataset import Dataset
+from decentralizepy.datasets.Partitioner import DataPartitioner
+from decentralizepy.datasets.text.LLMData import LLMData
+from decentralizepy.mappings.Mapping import Mapping
+from decentralizepy.models.Model import Model
+
+NUM_CLASSES = 2
+
+
+class Twitter(Dataset):
+    """
+    Class for the Twitter sentiment analysis dataset
+    -- Based on LEAF Benchmark
+    """
+
+    def __read_file__(self, file_path):
+        """
+        Read data from the given json file
+
+        Parameters
+        ----------
+        file_path : str
+            The file path
+
+        Returns
+        -------
+        tuple
+            (users, num_samples, data)
+
+        """
+        with open(file_path, "r") as inf:
+            client_data = json.load(inf)
+        return (
+            client_data["users"],
+            client_data["num_samples"],
+            client_data["user_data"],
+        )
+
+    def __read_dir__(self, data_dir):
+        """
+        Function to read all the Twitter data files in the directory
+
+        Parameters
+        ----------
+        data_dir : str
+            Path to the folder containing the data files
+
+        Returns
+        -------
+        3-tuple
+            A tuple containing list of users, number of samples per client,
+            and the data items per client
+
+        """
+        users = []
+        num_samples = []
+        data = defaultdict(lambda: None)
+
+        files = os.listdir(data_dir)
+        files = [f for f in files if f.endswith(".json")]
+        for f in files:
+            file_path = os.path.join(data_dir, f)
+            u, n, d = self.__read_file__(file_path)
+            users.extend(u)
+            num_samples.extend(n)
+            data.update(d)
+        return users, num_samples, data
+
+    def load_trainset(self):
+        """
+        Loads the training set. Partitions it if needed.
+
+        """
+        logging.info("Loading training set.")
+        files = os.listdir(self.train_dir)
+        files = [f for f in files if f.endswith(".json")]
+        files.sort()
+        c_len = len(files)
+
+        # rng = Random()
+        # rng.seed(self.random_seed)
+        # rng.shuffle(files)
+
+        if self.sizes == None:  # Equal distribution of data among processes
+            e = c_len // self.num_partitions
+            frac = e / c_len
+            self.sizes = [frac] * self.num_partitions
+            self.sizes[-1] += 1.0 - frac * self.num_partitions
+            logging.debug("Size fractions: {}".format(self.sizes))
+
+        print("Dataset ID: ", self.dataset_id)
+
+        # my_clients_temp = DataPartitioner(files, self.sizes).use(self.dataset_id)
+        my_clients_temp = DataPartitioner(files, self.sizes, seed=self.random_seed).use(
+            self.dataset_id
+        )
+        my_clients = []
+        for i, x in enumerate(my_clients_temp):
+            my_clients.append(x)
+            i += 1
+            if self.at_most and i >= self.at_most:
+                break
+        my_train_data = {"x": [], "y": []}
+        self.clients = []
+        self.num_samples = []
+        logging.debug("Clients Length: %d", c_len)
+        logging.debug("My_clients_len: %d", my_clients.__len__())
+        for i in range(my_clients.__len__()):
+            cur_file = my_clients.__getitem__(i)
+
+            clients, _, train_data = self.__read_file__(
+                os.path.join(self.train_dir, cur_file)
+            )
+            for cur_client in clients:
+                self.clients.append(cur_client)
+                my_train_data["x"].extend([x[4] for x in train_data[cur_client]["x"]])
+                my_train_data["y"].extend(
+                    [0 if x == "0" else 1 for x in train_data[cur_client]["y"]]
+                )
+                self.num_samples.append(len(train_data[cur_client]["y"]))
+        # turns the list of lists into a single list
+        self.train_y = torch.nn.functional.one_hot(
+            torch.tensor(my_train_data["y"]).to(torch.int64),
+            num_classes=NUM_CLASSES,
+        ).to(torch.float32)
+        self.train_x = self.tokenizer(
+            my_train_data["x"], return_tensors="pt", truncation=True, padding=True
+        )
+        assert self.train_x["input_ids"].shape[0] == self.train_y.shape[0]
+        assert self.train_y.shape[0] > 0
+
+    def load_testset(self):
+        """
+        Loads the testing set.
+
+        """
+        logging.info("Loading testing set.")
+        _, _, d = self.__read_dir__(self.test_dir)
+        test_x = []
+        test_y = []
+        for test_data in d.values():
+            test_x.extend([x[4] for x in test_data["x"]])
+            test_y.extend([0 if x == "0" else 1 for x in test_data["y"]])
+        self.test_y = torch.nn.functional.one_hot(
+            torch.tensor(test_y).to(torch.int64), num_classes=NUM_CLASSES
+        ).to(torch.float32)
+        self.test_x = self.tokenizer(
+            test_x, return_tensors="pt", truncation=True, padding=True
+        )
+        assert self.test_x["input_ids"].shape[0] == self.test_y.shape[0]
+        assert self.test_y.shape[0] > 0
+
+    def __init__(
+        self,
+        rank: int,
+        machine_id: int,
+        mapping: Mapping,
+        random_seed: int = 1234,
+        only_local=False,
+        train_dir="",
+        test_dir="",
+        sizes="",
+        test_batch_size=256,
+        tokenizer="BERT",
+        at_most=0,
+        *args,
+        **kwargs
+    ):
+        """
+        Constructor which reads the data files, instantiates and partitions the dataset
+
+        Parameters
+        ----------
+        rank : int
+            Rank of the current process (to get the partition).
+        machine_id : int
+            Machine ID
+        mapping : decentralizepy.mappings.Mapping
+            Mapping to convert rank, machine_id -> uid for data partitioning
+            It also provides the total number of global processes
+        random_seed : int, optional
+            Random seed for the dataset. Default value is 1234
+        only_local : bool, optional
+            True if the dataset needs to be partioned only among local procs, False otherwise
+        train_dir : str, optional
+            Path to the training data files. Required to instantiate the training set
+            The training set is partitioned according to the number of global processes and sizes
+        test_dir : str, optional
+            Path to the testing data files Required to instantiate the testing set
+        sizes : list(int), optional
+            A list of fractions specifying how much data to alot each process. Sum of fractions should be 1.0
+            By default, each process gets an equal amount.
+        test_batch_size : int, optional
+            Batch size during testing. Default value is 64
+
+        """
+        super().__init__(
+            rank,
+            machine_id,
+            mapping,
+            random_seed,
+            only_local,
+            train_dir,
+            test_dir,
+            sizes,
+            test_batch_size,
+        )
+        self.at_most = at_most
+        print(tokenizer)
+
+        if tokenizer == "MobileBERT":
+            # logging.info("Using MobileBERT tokenizer")
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                "google/mobilebert-uncased", model_max_length=512
+            )
+        elif tokenizer == "BERT":
+            # logging.info("Using BERT tokenizer")
+            print("Using BERT tokenizer")
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                "bert-base-uncased", model_max_length=512
+            )
+        elif tokenizer == "DistilBERT":
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                "distilbert-base-uncased", model_max_length=512
+            )
+        elif tokenizer == "RoBERTa":
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                "roberta-base", model_max_length=512
+            )
+        else:
+            raise ValueError("Tokenizer not supported")
+
+        if self.__training__:
+            self.load_trainset()
+
+        if self.__testing__:
+            self.load_testset()
+
+    def get_trainset(self, batch_size=1, shuffle=True):
+        """
+        Function to get the training set
+
+        Parameters
+        ----------
+        batch_size : int, optional
+            Batch size for learning
+
+        Returns
+        -------
+        torch.utils.Dataset(decentralizepy.datasets.Data)
+
+        Raises
+        ------
+        RuntimeError
+            If the training set was not initialized
+
+        """
+        if self.__training__:
+            return DataLoader(
+                LLMData(self.train_x, self.train_y),
+                batch_size=batch_size,
+                shuffle=shuffle,
+            )
+        raise RuntimeError("Training set not initialized!")
+
+    def get_testset(self):
+        """
+        Function to get the test set
+
+        Returns
+        -------
+        torch.utils.Dataset(decentralizepy.datasets.text.LLMData)
+
+        Raises
+        ------
+        RuntimeError
+            If the test set was not initialized
+
+        """
+        if self.__testing__:
+            return DataLoader(
+                LLMData(self.test_x, self.test_y),
+                batch_size=self.test_batch_size,
+                shuffle=True,
+            )
+        raise RuntimeError("Test set not initialized!")
+
+    def test(self, model, loss=None, batches=None):
+        model.eval()
+
+        # correct_pred = torch.tensor([0 for _ in range(NUM_CLASSES)]).to(torch.int64).cuda()
+        # total_pred = torch.tensor([0 for _ in range(NUM_CLASSES)]).to(torch.int64).cuda()
+
+        correct_pred = torch.tensor([0 for _ in range(NUM_CLASSES)]).to(torch.int64)
+        total_pred = torch.tensor([0 for _ in range(NUM_CLASSES)]).to(torch.int64)
+        if torch.cuda.is_available():
+            correct_pred = correct_pred.cuda()
+            total_pred = total_pred.cuda()
+
+        total_correct = 0
+        total_predicted = 0
+
+        testloader = self.get_testset()
+        if torch.cuda.is_available():
+            model = model.cuda()
+
+        with torch.no_grad():
+            loss_val = 0.0
+            count = 0
+            # for i, batch in enumerate(
+            #     tqdm(testloader, desc=f"Evaluation", leave=False)
+            # ):
+            for i, batch in enumerate(testloader):
+                if torch.cuda.is_available():
+                    batch = {k: v.cuda() for k, v in batch.items()}
+                input_ids = batch["input_ids"]
+                attention_mask = batch["attention_mask"]
+                labels = batch["labels"]
+                outputs = model(input_ids, attention_mask=attention_mask, labels=labels)
+                loss_val = outputs.loss + loss_val
+                logits = outputs.logits
+                count += 1
+                _, predictions = torch.max(logits, 1)
+                _, non_hot_label = torch.max(labels, 1)
+
+                # predictions.cuda()
+                # non_hot_label.cuda()
+
+                correct_mask = non_hot_label == predictions
+                correct_pred += torch.bincount(
+                    non_hot_label[correct_mask], minlength=non_hot_label.max() + 1
+                )
+                total_pred += torch.bincount(
+                    non_hot_label, minlength=non_hot_label.max() + 1
+                )
+
+                total_correct = correct_mask.sum() + total_correct
+                total_predicted = len(non_hot_label) + total_predicted
+
+                if batches and i >= batches:
+                    break
+
+                # for label, prediction in zip(non_hot_label, predictions):
+                #     # print("{} predicted as {}".format(label, prediction))
+                #     if label == prediction:
+                #         correct_pred[label] += 1
+                #         total_correct += 1
+                #     total_pred[label] += 1
+                #     total_predicted += 1
+
+            # for key, value in enumerate(correct_pred):
+            #     if total_pred[key] != 0:
+            #         accuracy = 100 * float(value) / total_pred[key]
+            #     else:
+            #         accuracy = 100.0
+            #     # logging.debug(
+            #     #     "Accuracy for class {} is: {:.1f} %".format(key, accuracy)
+            #     # )
+            #     print("Accuracy for class {} is: {:.1f} %".format(key, accuracy))
+
+            accuracy = total_correct / total_predicted * 100
+            loss_val = loss_val / count
+            # logging.info("Overall test accuracy is: {:.1f} %".format(accuracy))
+            accuracy = accuracy.item()
+            loss_val = loss_val.item()
+            print(
+                "Overall test accuracy is: {:.1f}, loss is: {:.4f} %".format(
+                    accuracy, loss_val
+                )
+            )
+            model = model.cpu()
+            return accuracy, loss_val
+
+
+def MobileBERT(*args, **kwargs):
+    """
+    Function to instantiate a MobileBERT model
+
+    Returns
+    -------
+    decentralizepy.models.text.MobileBERT
+
+    """
+    if "path" in kwargs:
+        model_path = kwargs["path"]
+    else:
+        model_path = "google/mobilebert-uncased"
+    return AutoModelForSequenceClassification.from_pretrained(
+        model_path,
+        num_labels=NUM_CLASSES,
+        problem_type="multi_label_classification",
+    )
+
+
+def RoBERTa(*args, **kwargs):
+    """
+    Function to instantiate a RoBERTa model
+
+    Returns
+    -------
+    decentralizepy.models.text.RoBERTa
+
+    """
+    if "path" in kwargs:
+        model_path = kwargs["path"]
+    else:
+        model_path = "roberta-base"
+    return AutoModelForSequenceClassification.from_pretrained(
+        model_path,
+        num_labels=NUM_CLASSES,
+        problem_type="multi_label_classification",
+    )
+
+
+def DistilBERT(*args, **kwargs):
+    """
+    Function to instantiate a DistilBERT model
+
+    Returns
+    -------
+    decentralizepy.models.text.DistilBERT
+
+    """
+    if "path" in kwargs:
+        model_path = kwargs["path"]
+    else:
+        model_path = "distilbert-base-uncased"
+    return AutoModelForSequenceClassification.from_pretrained(
+        model_path,
+        num_labels=NUM_CLASSES,
+        problem_type="multi_label_classification",
+    )
+
+
+def BERT(*args, **kwargs):
+    """
+    Function to instantiate a BERT model
+
+    Returns
+    -------
+    decentralizepy.models.text.BERT
+
+    """
+    if "path" in kwargs:
+        model_path = kwargs["path"]
+    else:
+        model_path = "bert-base-uncased"
+    model = AutoModelForSequenceClassification.from_pretrained(
+        model_path,
+        num_labels=NUM_CLASSES,
+        problem_type="multi_label_classification",
+    )
+    # state_dict = model.state_dict()
+    # rng = torch.Generator()
+    # rng.manual_seed(1234)
+    # for key, value in state_dict.items():
+    #     noise = torch.rand(value.shape, generator = rng) / 100 - 0.005
+    #     state_dict[key] = value + noise
+    # model.load_state_dict(state_dict)
+    return model
