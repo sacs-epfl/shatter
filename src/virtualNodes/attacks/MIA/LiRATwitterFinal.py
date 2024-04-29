@@ -85,7 +85,7 @@ class LiRATwitter:
         self,
         K=64,
         random_seed=34252,
-        train_dir="/nfs/risharma/sent140/per_user_data/train",
+        train_dir="/train",
     ):
         self.K = K
         self.random_seed = random_seed
@@ -481,14 +481,11 @@ class LiRAMIA:
 if __name__ == "__main__":
     # os.environ["TOKENIZERS_PARALLELISM"] = "false"
     dataset = LiRATwitter(
-        K=64, random_seed=34252, train_dir="/nfs/risharma/sent140/per_user_data/train"
+        K=64, random_seed=34252, train_dir="/train"
     )
     dataset.train_parallel_shadow_models(
         epochs=20, weights_store_dir="./weights_BERT_64_Full"
     )
-    # dataset.load_shadow_models(weights_store_dir="./weights_BERT_64")
     mia = LiRAMIA(dataset, "./weights_BERT_64_Full").precompute_shadow_confidences(
         batch_size=512
     )
-    # mia = LiRAMIA(dataset, "./weights_BERT_64")
-    # mia.load_shadow_confidences("/nfs/risharma/virtualNodes/src/virtualNodes/attacks/MIA/weights_BERT_64/confidences_clamped_seed90_K64.pt")
