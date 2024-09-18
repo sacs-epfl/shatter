@@ -315,7 +315,8 @@ class STCClient(Node):
 
         """
 
-        total_threads = os.cpu_count()
+        # total_threads = os.cpu_count()
+        total_threads = 64
         self.threads_per_proc = max(
             math.floor(total_threads / mapping.get_local_procs_count()), 1
         )

@@ -152,7 +152,7 @@ class VNode(DPSGDWithPeerSampler):
         """
         raise NotImplementedError
 
-    def get_vids(self):
+    def get_vids(self, uid = None):
         """
         Get the list of virtual node IDs of the current node.
 
@@ -162,11 +162,13 @@ class VNode(DPSGDWithPeerSampler):
             List of virtual node IDs
 
         """
+        if uid is None:
+            uid = self.uid
         n_procs_real = self.mapping.get_n_procs()
-        vids = [self.uid + (j + 1) * n_procs_real for j in range(self.vnodes_per_node)]
+        vids = [uid + (j + 1) * n_procs_real for j in range(self.vnodes_per_node)]
         return vids
 
-    def get_master_node(self):
+    def get_master_node(self, uid = None):
         """
         Get the master node of the current node.
 
@@ -176,5 +178,7 @@ class VNode(DPSGDWithPeerSampler):
             The master node ID
 
         """
+        if uid is None:
+            uid = self.rank
         n_procs_real = self.mapping.get_n_procs()
-        return self.rank % n_procs_real
+        return uid % n_procs_real

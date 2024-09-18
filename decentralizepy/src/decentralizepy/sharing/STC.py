@@ -139,7 +139,7 @@ class STC(Sharing):
         with torch.no_grad():
             tensors_to_cat = []
             for _, v in m.items():
-                t = v.flatten()
+                t = v.flatten().cpu()
                 tensors_to_cat.append(t)
             return torch.cat(tensors_to_cat, dim=0)
 

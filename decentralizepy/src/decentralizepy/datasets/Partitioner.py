@@ -3,7 +3,9 @@ from random import Random
 import numpy as np
 import torch
 
+
 """ Adapted from https://pytorch.org/tutorials/intermediate/dist_tuto.html """
+
 
 
 class Partition(object):
@@ -26,10 +28,10 @@ class Partition(object):
         self.data = [data[i] for i in index]
         self.index = index
 
-        if isinstance(data, torch.Tensor):
-            self.data = torch.tensor(self.data, dtype=data.dtype)
-        elif isinstance(data, np.ndarray):
-            self.data = np.array(self.data, dtype=data.dtype)
+        # if isinstance(data, torch.Tensor):
+        #     self.data = torch.tensor(self.data, dtype=data.dtype)
+        # elif isinstance(data, np.ndarray):
+        #     self.data = np.array(self.data, dtype=data.dtype)
 
     def __len__(self):
         """
@@ -187,6 +189,119 @@ class KShardDataPartitioner(DataPartitioner):
                     index_start = indexes[:start]
                     index_start.extend(indexes[start + part_len :])
                     indexes = index_start
+
+
+class PrePartitioned(DataPartitioner):
+    def __init__(self, data, label_dists, seed=1234):
+        num_clients = len(label_dists)
+        self.data = data
+
+        # Convert label_dists to a list of lists
+        label_dists = [label_dists[str(i)] for i in range(num_clients)]
+        
+        num_classes = len(label_dists[0])
+
+        # Calculate total counts per class across all clients using PyTorch tensors
+        total_counts = torch.tensor([sum(client_dists[c] for client_dists in label_dists) for c in range(num_classes)], dtype=torch.float)
+
+        # Calculate proportions per class per client using PyTorch tensors
+        proportions = torch.tensor([[client_dists[c] / total_counts[c] for c in range(num_classes)] for client_dists in label_dists], dtype=torch.float)
+
+        # Initialize partitions as lists of lists
+        self.partitions = [[] for _ in range(num_clients)]
+
+        # Initialize test_label_dists using PyTorch tensor
+        test_label_dists = torch.zeros((num_clients, num_classes), dtype=torch.int)
+
+        # Initialize a PyTorch random number generator with a seed
+        rng = torch.Generator()
+        rng.manual_seed(seed)
+
+        # Sort and shuffle test set indices by class
+        for c in range(num_classes):
+            class_indices_list = torch.tensor([i for i, item in enumerate(data) if item[1] == c], dtype=torch.long)
+            shuffled_indices = class_indices_list[torch.randperm(len(class_indices_list), generator=rng)]
+
+            # Calculate total and per-client item counts
+            class_count = len(shuffled_indices)
+            per_client_counts = (proportions[:, c] * class_count).to(torch.int).tolist()
+            distributed_count = sum(per_client_counts)
+
+            # Adjust for rounding errors without exceeding class_count
+            while distributed_count < class_count:
+                for client_id in range(num_clients):
+                    if distributed_count >= class_count:
+                        break
+                    if label_dists[client_id][c] > 0:  # Ensure non-zero proportion
+                        per_client_counts[client_id] += 1
+                        distributed_count += 1
+
+            # Distribute items based on adjusted counts
+            start_index = 0
+            for client_id, num_items in enumerate(per_client_counts):
+                end_index = start_index + num_items
+                test_label_dists[client_id, c] = num_items
+                self.partitions[client_id].extend(shuffled_indices[start_index:end_index].tolist())
+                start_index = end_index
+
+
+# class PrePartitioned(DataPartitioner):
+#     def __init__(self, data, label_dists, seed = 1234):
+#         num_clients = len(label_dists)
+#         self.data = data
+
+#         new_label_dists = []
+#         for i in range(num_clients):
+#             new_label_dists.append(label_dists[str(i)])
+#         label_dists = new_label_dists
+
+
+#         num_classes = len(label_dists[0])
+        
+#         # Calculate total counts per class across all clients
+#         total_counts = [sum(client_dists[c] for client_dists in label_dists) for c in range(num_classes)]
+
+#         # Calculate proportions per class per client
+#         proportions = [[client_dists[c] / total_counts[c] for c in range(num_classes)] for client_dists in label_dists]
+
+#         # Initialize partitions
+#         # self.client_partitions = [Partition(data, []) for _ in range(num_clients)]
+#         self.partitions = [[] for _ in range(num_clients)]
+
+#         test_label_dists = [[0] * num_classes for _ in range(num_clients)]
+
+#         # initialize a torch generator
+#         rng = torch.Generator()
+#         rng.manual_seed(seed)
+
+
+#         # Sort and shuffle test set indices by class
+#         for c in range(num_classes):
+#             class_indices_list = [i for i, item in enumerate(data) if item[1] == c]
+#             shuffled_indices = torch.randperm(len(class_indices_list), generator=rng).tolist()
+#             class_indices_list = [class_indices_list[i] for i in shuffled_indices]
+            
+#             # Calculate total and per-client item counts
+#             class_count = len(class_indices_list)
+#             per_client_counts = [int(proportions[client_id][c] * class_count) for client_id in range(num_clients)]
+#             distributed_count = sum(per_client_counts)
+            
+#             # Adjust for rounding errors without exceeding class_count
+#             while distributed_count < class_count:
+#                 for client_id in range(num_clients):
+#                     if distributed_count >= class_count:
+#                         break
+#                     if label_dists[client_id][c] > 0:  # Ensure non-zero proportion
+#                         per_client_counts[client_id] += 1
+#                         distributed_count += 1
+            
+#             # Distribute items based on adjusted counts
+#             start_index = 0
+#             for client_id, num_items in enumerate(per_client_counts):
+#                 end_index = start_index + num_items
+#                 test_label_dists[client_id][c] = num_items
+#                 self.partitions[client_id].extend(class_indices_list[start_index:end_index])
+#                 start_index = end_index
 
 
 class DirichletDataPartitioner(DataPartitioner):

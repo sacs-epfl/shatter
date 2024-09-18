@@ -37,8 +37,10 @@ class TCP(Communication):
             Full address of the process using TCP
 
         """
-        machine_addr = socket.gethostbyname(self.ip_addrs[str(machine_id)])
-        port = (2 * rank + 1) + self.offset
+        # machine_addr = socket.gethostbyname(self.ip_addrs[str(machine_id)])
+        machine_addr = self.ip_addrs[str(machine_id)]
+        # port = (2 * rank + 1) + self.offset
+        port = rank + self.offset + 1
         assert port > 0
         return "tcp://{}:{}".format(machine_addr, port)
 
@@ -94,7 +96,8 @@ class TCP(Communication):
         self.router.setsockopt(zmq.ROUTER_MANDATORY, 1)
         self.router.setsockopt(zmq.SNDHWM, 0)
         self.router.setsockopt(zmq.RCVHWM, 0)
-        self.router.bind(self.addr(rank, machine_id))
+        # self.router.bind(self.addr(rank, machine_id))
+        self.router.bind("tcp://*:{}".format(self.uid + self.offset + 1))
 
         self.total_data = 0
         self.total_meta = 0

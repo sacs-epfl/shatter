@@ -38,7 +38,7 @@ class VNodeFake(VNode):
         self.messages_received = [0 for _ in range(self.iterations)]
 
         for iteration in range(self.iterations):
-            logging.info("Starting training iteration: %d", iteration)
+            # logging.info("Starting training iteration: %d", iteration)
 
             self.iteration = iteration
 
@@ -47,16 +47,16 @@ class VNodeFake(VNode):
             self.my_neighbors = new_neighbors
             self.connect_neighbors()
 
-            logging.debug("Connected to all neighbors")
+            # logging.debug("Connected to all neighbors")
 
             while not self.received_from_all():
                 sender, data = self.receive_Virtual()
 
-                logging.debug(
-                    "Received a Model from {} of iteration {}".format(
-                        sender, data["iteration"]
-                    )
-                )
+                # logging.debug(
+                #     "Received a Model from {} of iteration {}".format(
+                #         sender, data["iteration"]
+                #     )
+                # )
 
                 if sender == self.master_node:
                     # To forward to neighbors
@@ -68,7 +68,7 @@ class VNodeFake(VNode):
                     self.communication.send(self.master_node, data)
                 self.messages_received[data["iteration"]] += 1
 
-            logging.info("Received all messages for iteration {}".format(iteration))
+            # logging.info("Received all messages for iteration {}".format(iteration))
             self.communication.send(
                 self.master_node,
                 {
@@ -99,7 +99,7 @@ class VNodeFake(VNode):
 
         self.disconnect_neighbors()
 
-        logging.info("All neighbors disconnected. Process complete!")
+        # logging.info("All neighbors disconnected. Process complete!")
 
     def instantiate(
         self,
@@ -152,8 +152,8 @@ class VNodeFake(VNode):
 
         """
 
-        self.init_log(log_dir, rank, log_level)
-        logging.info("Started process.")
+        # self.init_log(log_dir, rank, log_level)
+        # logging.info("Started process.")
 
         self.cache_fields(
             rank,

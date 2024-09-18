@@ -3,3 +3,4 @@ slack
 slackclient
 tqdm
 transformers
+--editable .

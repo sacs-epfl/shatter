@@ -19,11 +19,11 @@ from decentralizepy.mappings.Mapping import Mapping
 from decentralizepy.models.Model import Model
 import pickle
 
-NUM_CLASSES = 10
+NUM_CLASSES = 100
 
 
 
-class CIFAR10(Dataset):
+class CIFAR100(Dataset):
     """
     Class for the FEMNIST dataset
 
@@ -35,7 +35,7 @@ class CIFAR10(Dataset):
 
         """
         logging.info("Loading training set.")
-        trainset = torchvision.datasets.CIFAR10(
+        trainset = torchvision.datasets.CIFAR100(
             root=self.train_dir, train=True, download=True, transform=self.transform
         )
 
@@ -114,7 +114,7 @@ class CIFAR10(Dataset):
         """
         logging.info("Loading testing set.")
 
-        self.testset = torchvision.datasets.CIFAR10(
+        self.testset = torchvision.datasets.CIFAR100(
             root=self.test_dir, train=False, download=True, transform=self.transform
         )
 
@@ -620,7 +620,7 @@ def ResNet18():
 
 
 class ResNet8(Model):
-    def __init__(self, num_classes=10):
+    def __init__(self, num_classes=100):
         super(ResNet8, self).__init__()
         block = BasicBlock
         num_blocks = [1, 1, 1]
@@ -633,7 +633,6 @@ class ResNet8(Model):
         self.layer2 = self._make_layer(block, 256, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 512, num_blocks[2], stride=2)
         self.linear1 = nn.Linear(2048, num_classes)
-        self.linear2 = nn.Linear(2048, num_classes)
         self.emb = nn.Embedding(num_classes, num_classes)
         self.emb.weight = nn.Parameter(torch.eye(num_classes))
 

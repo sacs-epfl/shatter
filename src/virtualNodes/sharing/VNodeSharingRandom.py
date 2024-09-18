@@ -1,6 +1,6 @@
 import logging
 from time import sleep
-
+import copy
 import torch
 
 from decentralizepy.sharing.Sharing import Sharing
@@ -79,6 +79,25 @@ class VNodeSharing(Sharing):
 
         # instantiate a torch generator
         self.random_indices = None
+
+    def copy_model(self, model):
+        """
+        Copies the model
+
+        Parameters
+        ----------
+        model : torch.nn.Module
+            Model to copy
+
+        """
+
+        self.attack_model = copy.deepcopy(model)
+        tensors_to_cat = []
+        for _, v in self.attack_model.state_dict().items():
+            t = v.flatten()
+            tensors_to_cat.append(t)
+        self.T = torch.cat(tensors_to_cat, dim=0).to(self.device)
+        del self.attack_model
 
     def serialized_models(self, vnodes_per_node=1, sparsity=0.0):
         """

@@ -407,7 +407,7 @@ class STCServer(Node):
 
         self.disconnect_neighbors()
         logging.info("Storing final weight")
-        self.model.dump_weights(self.weights_store_dir, self.uid, iteration)
+        # self.model.dump_weights(self.weights_store_dir, self.uid, iteration)
         logging.info("All neighbors disconnected. Process complete!")
 
     def __init__(
