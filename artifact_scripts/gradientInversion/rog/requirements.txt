@@ -1,0 +1,13 @@
+torch
+slack
+slackclient
+matplotlib
+inplace_abn
+lpips
+numpy
+opencv_python
+pandas
+Pillow
+PyYAML
+scipy
+torchvision
