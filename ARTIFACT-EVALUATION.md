@@ -27,18 +27,14 @@ We tested the artifacts on Ubuntu 22.04 and Python 3.10. This should however not
 Each experiment should take roughly an hour. So, in total, the experiments should take ~4 hours.
 Each experiment should take up roughly 1GB of storage, totalling up to ~4GBs of storage.
 
-## Environment [TODO]
-The artifact code and data can be accessed via https://github.com/sacs-epfl/shatter.
-We also provide a Dockerfile in the repository and the docker image at <TODO>
-
-
+## Environment
 
 ### Accessibility (All badges)
 The artifact code and data can be accessed via [https://github.com/sacs-epfl/shatter](https://github.com/sacs-epfl/shatter). This is the lab's public Github.
-We also provide a Dockerfile in the repository and the docker image at <TODO>.
+We also provide a Dockerfile in the repository and the docker image on the Docker Hub as `rishis8/shatter-artifact-pets2025:latest`.
 
 ### Set up the environment (Only for Functional and Reproduced badges)
-We recommend using the Docker image since everything is already set up.
+We recommend using the Docker image (`rishis8/shatter-artifact-pets2025:latest`) since everything is already set up.
 Else, please create a virtual environment with python 3.10 (and git and git-lfs) and use the following commands in the root directory of the repository:
 ```bash
 pip install -r requirements.txt

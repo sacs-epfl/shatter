@@ -2,7 +2,7 @@
 
 # Check if the number of arguments is exactly 2
 if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <root of shatter repository> <environment python executable folder, e.g. ~/miniconda/envs/shatter/bin/>"
+    echo "Usage: $0 <root of shatter repository> <environment python executable folder, e.g. ~/.conda/envs/venv/bin/>"
     exit 1
 fi
 

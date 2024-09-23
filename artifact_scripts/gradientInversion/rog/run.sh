@@ -2,7 +2,7 @@
 
 # Check if the number of arguments is exactly 1
 if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <environment python executable folder, e.g. ~/miniconda/envs/shatter/bin/>"
+    echo "Usage: $0 <environment python executable folder, e.g. ~/.conda/envs/venv/bin/>"
     exit 1
 fi
 
