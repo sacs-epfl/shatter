@@ -1,0 +1,8 @@
+model_zoos filter=lfs diff=lfs merge=lfs -text
+data.zip filter=lfs diff=lfs merge=lfs -text
+model_zoos/postmodel.pth filter=lfs diff=lfs merge=lfs -text
+model_zoos/README.md filter=lfs diff=lfs merge=lfs -text
+model_zoos/tresnet.pth filter=lfs diff=lfs merge=lfs -text
+model_zoos/usrgan.pth filter=lfs diff=lfs merge=lfs -text
+model_zoos/denoiser.pth filter=lfs diff=lfs merge=lfs -text
+model_zoos/kernels_bicubicx234.mat filter=lfs diff=lfs merge=lfs -text

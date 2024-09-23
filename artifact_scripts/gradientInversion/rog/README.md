@@ -14,34 +14,7 @@ Federated learning has been proposed as a privacy-preserving machine learning fr
     pip3 install -r requirements.txt
     ```
 
-- Download the pretrained models and put them under `model_zoos` ([link](https://huggingface.co/erickyue/rog_modelzoo/tree/main))
-
-- Download the csv file (https://storage.googleapis.com/openimages/v6/oidv6-class-descriptions.csv) and put it under `data` folder
-
-- The images for a minimal runnable example has been included under `data` folder. The ImageNet validation dataset can be used for a full test. 
-
-<br />
-
-#### Example
-
-
-- Run the example with QSGD: 
+- Unzip Data
     ```bash
-    python3 main.py
+    unzip data.zip
     ```
-    The script will load the configuration file `config.yaml`. The results will be stored under `experiments`.
-
-- Run the example with FedAvg:
-    ```bash
-    python3 attack_fedavg.py
-    ```
-    The script will load the configuration file `config_fedavg.yaml`. 
-
-
-    You can change the settings in the configuration file. For example, use a different compression scheme with 
-    ```
-    compress: topk
-    ```
-
-<br />
-
