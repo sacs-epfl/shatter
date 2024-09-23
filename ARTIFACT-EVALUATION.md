@@ -21,58 +21,55 @@ To run the experiments at the full scale, one requires access to 25 g5.2x large 
 No special hardware needed.
 
 ### Software Requirements
-We tested the artifacts on Ubuntu 20.04 and Python 3.10. This should however not be a strict requirement. Dependencies can be installed through `requirements.txt`.
+We tested the artifacts on Ubuntu 22.04 and Python 3.10. This should however not be a strict requirement. Dependencies can be installed through `requirements.txt`.
 
 ### Estimated Time and Storage Consumption
-Provide an estimated value for the time the evaluation will take and the space on the disk it will consume. 
-This helps reviewers to schedule the evaluation in their time plan and to see if everything is running as intended.
-More specifically, a reviewer, who knows that the evaluation might take 10 hours, does not expect an error if, after 1 hour, the computer is still calculating things.
+Each experiment should take roughly an hour. So, in total, the experiments should take ~4 hours.
+Each experiment should take up roughly 1GB of storage, totalling up to ~4GBs of storage.
 
-## Environment 
-In the following, describe how to access our artifact and all related and necessary data and software components.
-Afterward, describe how to set up everything and how to verify that everything is set up correctly.
+## Environment [TODO]
+The artifact code and data can be accessed via https://github.com/sacs-epfl/shatter.
+We also provide a Dockerfile in the repository and the docker image at <TODO>
+
+
 
 ### Accessibility (All badges)
-Describe how to access your artifact via persistent sources.
-Valid hosting options are institutional and third-party digital repositories.
-Do not use personal web pages.
-For repositories that evolve over time (e.g., Git Repositories ), specify a specific commit-id or tag to be evaluated.
-In case your repository changes during the evaluation to address the reviewer's feedback, please provide an updated link (or commit-id / tag) in a comment.
+The artifact code and data can be accessed via [https://github.com/sacs-epfl/shatter](https://github.com/sacs-epfl/shatter). This is the lab's public Github.
+We also provide a Dockerfile in the repository and the docker image at <TODO>.
 
 ### Set up the environment (Only for Functional and Reproduced badges)
-Describe how the reviewers should set up the environment for your artifact, including downloading and installing dependencies and the installation of the artifact itself.
-Be as specific as possible here.
-If possible, use code segments to simply the workflow, e.g.,
-
+We recommend using the Docker image since everything is already set up.
+Else, please create a virtual environment with python 3.10 and use the following commands in the root directory of the repository:
 ```bash
-git clone git@my_awesome_artifact.com/repo
-apt install libxxx xxx
+pip install -r requirements.txt
+pip install --editable .
+cd artifact_scripts/gradientInversion/rog
+pip install -r artifact_scripts/gradientInversion/rog/requirements.txt
+unzip data.zip
+rm data.zip
 ```
-Describe the expected results where it makes sense to do so.
 
 ### Testing the Environment (Only for Functional and Reproduced badges)
-Describe the basic functionality tests to check if the environment is set up correctly.
-These tests could be unit tests, training an ML model on very low training data, etc..
-If these tests succeed, all required software should be functioning correctly.
-Include the expected output for unambiguous outputs of tests.
-Use code segments to simplify the workflow, e.g.,
-```bash
-python envtest.py
-```
+Check if CUDA is available, and `transformers` and `torch` can be imported in python venv.
+Check `artifact_scripts/gradientInversion/rog/data/val` and `artifact_scripts/gradientInversion/rog/model_zoos` exist.
+Finally, check `eval/data/CIFAR10`, `eval/data/movielens`, and `eval/data/sent140` exist.
 
 ## Artifact Evaluation (Only for Functional and Reproduced badges)
 This section includes all the steps required to evaluate your artifact's functionality and validate your paper's key results and claims.
 Therefore, highlight your paper's main results and claims in the first subsection. And describe the experiments that support your claims in the subsection after that.
 
 ### Main Results and Claims
-List all your paper's results and claims that are supported by your submitted artifacts.
+Shatter achieves better accuracy and privacy compared to the baselines of EL and Muffliato.
 
-#### Main Result 1: Name
-Describe the results in 1 to 3 sentences.
-Refer to the related sections in your paper and reference the experiments that support this result/claim.
+#### Main Result 1: Gradient-inversion attacks
+Shatter provides stronger defence against gradient inversion attacks.
+We measure this in terms of LPIPS score (higher is more private) and visually by inspecting the images.
+In the paper, this is shown in Figure 2 (Section 3) and Figure 8 (Section 6.4).
 
-#### Main Result 2: Name
-...
+#### Main Result 2: Membership-inference and Linkability attacks
+Shatter provides stronger defence against membership inference attack (MIA) as evident by the lower AUC of the ROC curve.
+Furthermore, Shatter lowers the linkability attack (LA) success as evident by the lower attack accuracy with Shatter as compared to EL and Muffliato.
+Sections 6.2 and 6.3 demonstrate this.
 
 ### Experiments 
 List each experiment the reviewer has to execute. Describe:
@@ -81,25 +78,25 @@ List each experiment the reviewer has to execute. Describe:
  - How long it takes and how much space it consumes on disk. (approximately)
  - Which claim and results does it support, and how.
 
-#### Experiment 1: Name
-Provide a short explanation of the experiment and expected results.
-Describe thoroughly the steps to perform the experiment and to collect and organize the results as expected from your paper.
-Use code segments to support the reviewers, e.g.,
-```bash
-python experiment_1.py
-```
-#### Experiment 2: Name
-...
+#### Experiment 1: Gradient-inversion attack
+- Inside the docker image or the correct environment setup, change the working directory to `shatter/artifact_scripts/gradientInversion/rog`.
+- Run `./run.sh ~/.conda/envs/venv/bin`. This should take ~1 hour and about 1GB of space because of reconstructed images.
+- Reconstructed images per client, aggregated data CSVs and bar plots are generated in `artifact_scripts/gradientInversion/rog/experiments/lenet`.
+- VNodes{k} is Shatter with k virtual nodes.
+- The images and lpips scores can be compared to Figures 2 and 8.
+- We recommend clearing up `artifact_scripts/gradientInversion/rog/experiments/lenet` before running other experiments to save disk space.
 
-#### Experiment 3: Name 
-...
+#### Experiment 2: Convergence, MIA and LA
+- Inside the docker image or the correct environment setup, change the working directory to `shatter/artifact_scripts/small_scale`.
+- These are smaller scale versions of the other experiments in the paper since the full-scale experiments take very long and need to be run across 25 machines.
+- Quickest way is to perform `./run_all /root/shatter/ .conda/envs/venv/bin`. This runs the experiments for all the datasets in one go. To do this step by step, one can also individually run the scripts for each dataset in `shatter/artifact_scripts/small_scale` with the same command line arguments. Experiments with each dataset should take ~1 hour and ~1GB is disk space. In total `run_all` should run in ~3 hours and ~3GBs of disk space.
+- Inside `shatter/artifact_scripts/small_scale/CIFAR10`, for each baseline, a new folder will be created for the experiment. The aggregated CSVs with `*test_acc.csv` (Figure 3, 5, 7), `*clients_linkability.csv` (Figure 6), `*clients_MIA.csv` (Figure 6), `*iterations_linkability.csv` (Partially Figure 7c), and `*iterations_MIA.csv` (Figure 5). Since these are smaller scale experiments, the values will not match the ones in the paper.
+
 
 ## Limitations (Only for Functional and Reproduced badges)
-Describe which tables and results are included or are not reproducible with the provided artifact.
-Provide an argument why this is not included/possible.
+The full results are not reproducible without 25 machines and a long run time, therefore we provided smaller scale experiments for the functional badge. The code works for a multi-machine setup similar to DecentralizePy.
 
 ## Notes on Reusability (Only for Functional and Reproduced badges)
-First, this section might not apply to your artifacts.
-Use it to share information on how your artifact can be used beyond your research paper, e.g., as a general framework.
-The overall goal of artifact evaluation is not only to reproduce and verify your research but also to help other researchers to re-use and improve on your artifacts.
-Please describe how your artifacts can be adapted to other settings, e.g., more input dimensions, other datasets, and other behavior, through replacing individual modules and functionality or running more iterations of a specific part.
+The code for Shatter is written in the same structure as DecentralizePy, so it can easily be plugged into projects using DecentralizePy.
+Furthermore, the code for the `attacks` in Shatter can be used beyond the scope of Shatter for general privacy-preserving research.
+To add more datasets, one needs to add the dataset in `decentralizepy.datasets` and the code to execute attacks in `virtualNodes.attacks`.

@@ -1,0 +1,10 @@
+*.pyc
+**/.git
+**/.env
+**/.idea
+**/__pycache__/
+**/.DS_Store
+**/.vscode
+**.egg-info
+**/massif.out*
+*swp

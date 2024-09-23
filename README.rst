@@ -13,7 +13,7 @@ To install the necessary dependencies, use the following command:
 
 .. code-block:: bash
 
-    pip install -r requirements.txt && pip install --editable .
+    pip install -r requirements.txt && pip install --editable . && pip install -r artifact_scripts/gradientInversion/rog/requirements.txt
 
 Usage
 =====
