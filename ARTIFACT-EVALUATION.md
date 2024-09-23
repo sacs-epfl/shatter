@@ -39,7 +39,7 @@ We also provide a Dockerfile in the repository and the docker image at <TODO>.
 
 ### Set up the environment (Only for Functional and Reproduced badges)
 We recommend using the Docker image since everything is already set up.
-Else, please create a virtual environment with python 3.10 and use the following commands in the root directory of the repository:
+Else, please create a virtual environment with python 3.10 (and git and git-lfs) and use the following commands in the root directory of the repository:
 ```bash
 pip install -r requirements.txt
 pip install --editable .
