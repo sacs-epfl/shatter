@@ -9,6 +9,12 @@ Decentralized Learning (DL) enables collaborative learning without a server and 
 Installation
 ============
 
+Before cloning, ensure that ypou have Git LFS installed. If not, you can install it using the following command:
+
+.. code-block:: bash
+
+    sudo apt-get update && sudo apt-get install git-lfs
+
 To install the necessary dependencies, use the following command:
 
 .. code-block:: bash

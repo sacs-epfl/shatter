@@ -22,6 +22,8 @@ No special hardware needed.
 
 ### Software Requirements
 We tested the artifacts on Ubuntu 22.04 and Python 3.10. This should however not be a strict requirement. Dependencies can be installed through `requirements.txt`.
+Git-LFS is essential to download the datasets and the models.
+Use `git lfs pull` to ensure large files are downloaded after cloning.
 
 ### Estimated Time and Storage Consumption
 Each experiment should take roughly an hour. So, in total, the experiments should take ~4 hours.
@@ -35,12 +37,18 @@ We also provide a Dockerfile in the repository and the docker image on the Docke
 
 ### Set up the environment (Only for Functional and Reproduced badges)
 We recommend using the Docker image (`rishis8/shatter-artifact-pets2025:latest`) since everything is already set up.
-Else, please create a virtual environment with python 3.10 (and git and git-lfs) and use the following commands in the root directory of the repository:
+The only thing needed is to install rog.
+```bash
+cd artifact_scripts/gradientInversion/rog
+pip install -r requirements.txt
+```
+
+If not using docker, please create a virtual environment with python 3.10 (and git and git-lfs) and use the following commands in the root directory of the repository:
 ```bash
 pip install -r requirements.txt
 pip install --editable .
 cd artifact_scripts/gradientInversion/rog
-pip install -r artifact_scripts/gradientInversion/rog/requirements.txt
+pip install -r requirements.txt
 unzip data.zip
 rm data.zip
 ```

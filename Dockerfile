@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
 
 # Set the home directory
 ENV HOME=/root
-
+# ENV TORCH_CUDA_ARCH_LIST=Turing
 # Create a directory called 'shatter' in the home directory
 RUN mkdir -p $HOME/shatter
 
@@ -57,8 +57,8 @@ RUN ${CONDA} run -n venv pip install --upgrade pip
 RUN ${CONDA} run -n venv pip install --upgrade setuptools
 RUN ${CONDA} run -n venv pip install -r requirements.txt
 RUN ${CONDA} run -n venv pip install -e .
-WORKDIR $HOME/shatter/artifact_scripts/gradientInversion/rog/
-RUN ${CONDA} run -n venv pip install -r requirements.txt
+# WORKDIR $HOME/shatter/artifact_scripts/gradientInversion/rog/
+# RUN ${CONDA} run -n venv pip install -r requirements.txt
 
 WORKDIR $HOME/shatter
 
