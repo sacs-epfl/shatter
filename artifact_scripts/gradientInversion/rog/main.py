@@ -12,8 +12,9 @@ from utils import *
 
 def main(config_file, **kwargs):
     chunks = kwargs["chunks"] if "chunks" in kwargs else 1
+    clients = kwargs["clients"] if "clients" in kwargs else 1
     print("chunks", chunks)
-    for b in range(61,100):
+    for b in range(clients):
         for this_chunk in range(chunks):
             torch.cuda.synchronize()
             if "manual_seed" in kwargs:

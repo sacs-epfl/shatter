@@ -17,7 +17,9 @@ RUN apt-get update && apt-get install -y \
     openssh-server \
     nodejs \
     zip \
-    unzip
+    unzip \
+    libgl1-mesa-glx \
+    git-lfs
 
 # Set the home directory
 ENV HOME=/root
@@ -56,7 +58,6 @@ ENV VENV_PATH=${CONDA_PREFIX}/envs/venv/bin
 RUN ${CONDA} run -n venv pip install --upgrade pip
 RUN ${CONDA} run -n venv pip install --upgrade setuptools
 RUN ${CONDA} run -n venv pip install -r requirements.txt
-RUN ${CONDA} run -n venv pip install -e .
 # WORKDIR $HOME/shatter/artifact_scripts/gradientInversion/rog/
 # RUN ${CONDA} run -n venv pip install -r requirements.txt
 

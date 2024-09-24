@@ -46,7 +46,6 @@ pip install -r requirements.txt
 If not using docker, please create a virtual environment with python 3.10 (and git and git-lfs) and use the following commands in the root directory of the repository:
 ```bash
 pip install -r requirements.txt
-pip install --editable .
 cd artifact_scripts/gradientInversion/rog
 pip install -r requirements.txt
 unzip data.zip
