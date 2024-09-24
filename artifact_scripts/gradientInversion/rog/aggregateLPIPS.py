@@ -48,7 +48,7 @@ result_df = df.groupby(['Baseline', 'Metric']).agg(
 # Create bar plots for each metric
 for metric in result_df['Metric'].unique():
     metric_df = result_df[result_df['Metric'] == metric]
-    metric_df.to_csv(f'{metric}_stats.csv', index=False)
+    metric_df.to_csv(f'{root}/{metric}_stats.csv', index=False)
     plt.figure(figsize=(10, 6))
     plt.bar(metric_df['Baseline'], metric_df['Mean'], yerr=metric_df['StdDev'], capsize=5)
     plt.title(f'Mean Values of {metric} by Baseline with Error Bars')
@@ -56,7 +56,7 @@ for metric in result_df['Metric'].unique():
     plt.ylabel('Mean Value')
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.savefig(f'{root}/{metric}_bar_plot.png')
+    plt.savefig(f'{root}/{metric}_bar_plot.pdf')
     plt.close()
-    print(f"Created {root}/{metric}_bar_plot.png")
+    print(f"Created {root}/{metric}_bar_plot.pdf")
     

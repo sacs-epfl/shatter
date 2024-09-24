@@ -51,6 +51,6 @@ tresnet: model_zoos/tresnet.pth
 
 
 # Log configurations
-output_folder: "experiments/resnet/VNode8"
+output_folder: "experiments/resnet/VNode08"
 printevery: 1
 

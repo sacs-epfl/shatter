@@ -7,26 +7,28 @@ if [ "$#" -ne 1 ]; then
 fi
 
 env_python=$1/python
+num_clients=1
 
 # Compute the results
 
 config_file=config_fedavg_lenet.yaml
-$env_python attack_fedavg.py $config_file
+$env_python attack_fedavg.py $config_file $num_clients
+
+echo "Finished EL Reconstructions!"
+sleep 2
 
 config_file=config_topk_lenet.yaml
-$env_python attack_fedavg.py $config_file
+$env_python attack_fedavg.py $config_file $num_clients
+echo "Finished TopK Reconstructions!"
+sleep 2
 
-config_file=config_vnodes2_lenet.yaml
-$env_python attack_vnodes.py $config_file 2
-
-config_file=config_vnodes4_lenet.yaml
-$env_python attack_vnodes.py $config_file 4
-
-config_file=config_vnodes8_lenet.yaml
-$env_python attack_vnodes.py $config_file 8
-
-config_file=config_vnodes16_lenet.yaml
-$env_python attack_vnodes.py $config_file 16
+for num_chunks in 2 4 8 16
+do
+    config_file=config_vnodes"${num_chunks}"_lenet.yaml
+    $env_python attack_vnodes.py $config_file $num_clients $num_chunks
+    echo "Finished Shatter with k=$num_chunks Reconstructions!"
+    sleep 2
+done
 
 
 echo "Reconstructed images can be found in experiments/"

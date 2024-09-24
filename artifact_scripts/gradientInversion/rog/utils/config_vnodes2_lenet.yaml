@@ -50,6 +50,6 @@ tresnet: model_zoos/tresnet.pth
 
 
 # Log configurations
-output_folder: "experiments/lenet/VNode2"
+output_folder: "experiments/lenet/VNode02"
 printevery: 1
 

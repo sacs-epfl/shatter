@@ -28,6 +28,7 @@ Use `git lfs pull` to ensure large files are downloaded after cloning.
 ### Estimated Time and Storage Consumption
 Each experiment should take roughly an hour. So, in total, the experiments should take ~4 hours.
 Each experiment should take up roughly 1GB of storage, totalling up to ~4GBs of storage.
+All time measurements were done when using 1 CPU and 1 Nvidia A100 80GB GPU.
 
 ## Environment
 
@@ -82,18 +83,18 @@ List each experiment the reviewer has to execute. Describe:
  - Which claim and results does it support, and how.
 
 #### Experiment 1: Gradient-inversion attack
-- Inside the docker image or the correct environment setup, change the working directory to `shatter/artifact_scripts/gradientInversion/rog`.
-- Run `./run.sh ~/.conda/envs/venv/bin`. This should take ~1 hour and about 1GB of space because of reconstructed images.
+- Inside the docker image or the correct environment setup, change the working directory to `artifact_scripts/gradientInversion/rog`.
+- Run `./run.sh ~/.conda/envs/venv/bin`. This should take ~15 minutes and about 30 MBs of space because of reconstructed images.
 - Reconstructed images per client, aggregated data CSVs and bar plots are generated in `artifact_scripts/gradientInversion/rog/experiments/lenet`.
 - VNodes{k} is Shatter with k virtual nodes.
-- The images and lpips scores can be compared to Figures 2 and 8.
+- The images and lpips scores can be compared to Figures 2 and 8. These will not be exact numbers since only 1 client was attacked as opposed to 100 in the experiments in the paper.
 - We recommend clearing up `artifact_scripts/gradientInversion/rog/experiments/lenet` before running other experiments to save disk space.
 
 #### Experiment 2: Convergence, MIA and LA
-- Inside the docker image or the correct environment setup, change the working directory to `shatter/artifact_scripts/small_scale`.
+- Inside the docker image or the correct environment setup, change the working directory to `artifact_scripts/small_scale`.
 - These are smaller scale versions of the other experiments in the paper since the full-scale experiments take very long and need to be run across 25 machines.
-- Quickest way is to perform `./run_all /root/shatter/ .conda/envs/venv/bin`. This runs the experiments for all the datasets in one go. To do this step by step, one can also individually run the scripts for each dataset in `shatter/artifact_scripts/small_scale` with the same command line arguments. Experiments with each dataset should take ~1 hour and ~1GB is disk space. In total `run_all` should run in ~3 hours and ~3GBs of disk space.
-- Inside `shatter/artifact_scripts/small_scale/CIFAR10`, for each baseline, a new folder will be created for the experiment. The aggregated CSVs with `*test_acc.csv` (Figure 3, 5, 7), `*clients_linkability.csv` (Figure 6), `*clients_MIA.csv` (Figure 6), `*iterations_linkability.csv` (Partially Figure 7c), and `*iterations_MIA.csv` (Figure 5). Since these are smaller scale experiments, the values will not match the ones in the paper.
+- Quickest way is to perform `./run_all /root/shatter/ .conda/envs/venv/bin`. This runs the experiments for all the datasets in one go. To do this step by step, one can also individually run the scripts for each dataset in `artifact_scripts/small_scale` with the same command line arguments. Experiments with each dataset should take ~1 hour and ~1GB is disk space. In total `run_all` should run in ~3 hours and ~3GBs of disk space.
+- Inside `artifact_scripts/small_scale/CIFAR10`, for each baseline, a new folder will be created for the experiment. The aggregated CSVs with `*test_acc.csv` (Figure 3, 5, 7), `*clients_linkability.csv` (Figure 6), `*clients_MIA.csv` (Figure 6), `*iterations_linkability.csv` (Partially Figure 7c), and `*iterations_MIA.csv` (Figure 5). Since these are smaller scale experiments, the values will not match the ones in the paper.
 
 
 ## Limitations (Only for Functional and Reproduced badges)
@@ -103,3 +104,4 @@ The full results are not reproducible without 25 machines and a long run time, t
 The code for Shatter is written in the same structure as DecentralizePy, so it can easily be plugged into projects using DecentralizePy.
 Furthermore, the code for the `attacks` in Shatter can be used beyond the scope of Shatter for general privacy-preserving research.
 To add more datasets, one needs to add the dataset in `decentralizepy.datasets` and the code to execute attacks in `virtualNodes.attacks`.
+In gradient inversion experiments, only 1 client was attacked across all baselines. To run a full version, set the `num_clients=100` in `artifact_scripts/gradientInversion/rog/run.sh`. This should take about 150x time and space.
