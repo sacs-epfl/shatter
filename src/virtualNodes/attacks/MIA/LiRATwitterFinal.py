@@ -480,9 +480,7 @@ class LiRAMIA:
 
 if __name__ == "__main__":
     # os.environ["TOKENIZERS_PARALLELISM"] = "false"
-    dataset = LiRATwitter(
-        K=64, random_seed=34252, train_dir="/train"
-    )
+    dataset = LiRATwitter(K=64, random_seed=34252, train_dir="/train")
     dataset.train_parallel_shadow_models(
         epochs=20, weights_store_dir="./weights_BERT_64_Full"
     )

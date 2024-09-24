@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 from shutil import copy
 
@@ -8,8 +7,8 @@ from torch import multiprocessing as mp
 
 from decentralizepy import utils
 from virtualNodes.mappings.VNodeLinear import VNodeLinear
-from virtualNodes.node.VNodePeerSampler import VNodePeerSampler
 from virtualNodes.node.dropouts.VNodeReal import VNodeReal
+from virtualNodes.node.VNodePeerSampler import VNodePeerSampler
 
 
 def read_ini(file_path):
@@ -24,7 +23,6 @@ def read_ini(file_path):
 
 if __name__ == "__main__":
     args = utils.get_args()
-    os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
     Path(args.log_dir).mkdir(parents=True, exist_ok=True)
 

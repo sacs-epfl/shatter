@@ -1,38 +1,9 @@
-import os
-
 import torch
 import torch.nn.functional as F
-import torchvision
-import torchvision.transforms as transforms
-from scipy.stats import norm
-from torch.distributions import Normal
-from torch.nn import CrossEntropyLoss
-from torch.optim import SGD, Adam
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-
-from decentralizepy.datasets.CIFAR10 import ResNet18
-from decentralizepy.training.Training import Training
-from virtualNodes.attacks.MIA.LiRAPartitioner import LiRAPartitioner
-
-NUM_CLASSES = 10
 
 
 class LOSSMIA:
     def __init__(self):
-        # self.transform = transforms.Compose(
-        #     [
-        #         transforms.ToTensor(),
-        #         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        #     ]
-        # )
-        # self.trainset = torchvision.datasets.CIFAR10(
-        #     root=train_dir, train=True, download=True, transform=self.transform
-        # )
-        # self.dataset_size = len(self.trainset)
-        # self.dataloader = DataLoader(self.trainset, batch_size=test_batch_size, shuffle=False)
-        # print("Partitions Loaded...")
-        # print("Initialized the new version of LOSSMIA")
         self.device = (
             torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         )
@@ -60,7 +31,7 @@ class LOSSMIA:
         victim_model,
         in_dataloader,
         out_dataloader,
-        in_size=10000,
+        in_size=50000,
         out_size=10000,
         epsilon=10e-9,
     ):

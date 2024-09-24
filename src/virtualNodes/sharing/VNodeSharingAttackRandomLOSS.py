@@ -1,14 +1,10 @@
 import copy
-import json
 import logging
 import os
-import sys
-from time import sleep
 
 import numpy as np
 import torch
 from torch.nn import CrossEntropyLoss, MSELoss
-from torch.utils.data import DataLoader
 
 from decentralizepy.datasets.CIFAR10 import CIFAR10
 from decentralizepy.datasets.MovieLens import MovieLens

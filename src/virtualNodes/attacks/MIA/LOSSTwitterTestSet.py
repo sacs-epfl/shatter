@@ -1,33 +1,9 @@
-import json
-import os
-
 import torch
 import torch.nn.functional as F
-import torchvision
-import torchvision.transforms as transforms
-from torch.distributions import Normal
-from torch.optim import SGD, AdamW
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-from transformers import AutoTokenizer
-
-from decentralizepy.datasets.text.LLMData import LLMData
-from decentralizepy.datasets.text.Twitter import BERT, Twitter
-from decentralizepy.mappings.Linear import Linear
-from decentralizepy.training.text.LLMTraining import LLMTraining
-from virtualNodes.attacks.MIA.LiRAPartitioner import LiRAPartitioner
-
-NUM_CLASSES = 2
 
 
 class LOSSMIA:
     def __init__(self):
-        # self.random_seed = 1234
-        # print("Creating and Loading partitions")
-        # self.trainset = Twitter(0, 0, Linear(1, 1), self.random_seed, only_local=False, train_dir=train_dir, test_batch_size=test_batch_size, tokenizer="BERT", at_most=None)
-        # self.dataloader = self.trainset.get_trainset(batch_size = test_batch_size, shuffle = False)
-        # self.dataset_size = self.trainset.train_y.shape[0]
-        # print("Partitions Loaded...")
         self.device = (
             torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         )
@@ -56,8 +32,8 @@ class LOSSMIA:
         victim_model,
         in_dataloader,
         out_dataloader,
-        in_size=10000,
-        out_size=10000,
+        in_size=32299,
+        out_size=8484,
         epsilon=10e-9,
     ):
         victim_model.eval()

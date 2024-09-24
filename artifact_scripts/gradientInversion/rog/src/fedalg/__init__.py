@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 import torch
 
+
 class FedAlg(ABC):
     def __init__(self, criterion, model, half=False):
         self.criterion = criterion

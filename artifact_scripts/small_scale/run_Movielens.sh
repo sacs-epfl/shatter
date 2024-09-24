@@ -12,17 +12,17 @@ python_bin=$2
 
 echo Computing Movielens/EL
 Movielens/EL/run.sh $nfs_home $python_bin
-eval/plot_csv_acc.py Movielens/EL
-eval/evaluate_attack.py Movielens/EL
+$python_bin/python $nfs_home/eval/plot_csv_acc.py Movielens/EL
+$python_bin/python $nfs_home/eval/evaluate_attack.py Movielens/EL
 
 echo Computing Movielens/Muffliato025
 Movielens/Muffliato025/run.sh $nfs_home $python_bin
-eval/plot_csv_acc.py Movielens/Muffliato025
-eval/evaluate_attack.py Movielens/Muffliato025
+$python_bin/python $nfs_home/eval/plot_csv_acc.py Movielens/Muffliato025
+$python_bin/python $nfs_home/eval/evaluate_attack.py Movielens/Muffliato025
 
 echo Computing Movielens/VNodes2
 Movielens/VNodes2/run.sh $nfs_home $python_bin
-eval/plot_csv_acc.py Movielens/VNodes2
-eval/evaluate_attack.py Movielens/VNodes2
+$python_bin/python $nfs_home/eval/plot_csv_acc.py Movielens/VNodes2
+$python_bin/python $nfs_home/eval/evaluate_attack.py Movielens/VNodes2
 
 echo Done Movielens!

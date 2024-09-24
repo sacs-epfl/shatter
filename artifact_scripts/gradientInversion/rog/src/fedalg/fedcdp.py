@@ -1,15 +1,17 @@
 import copy
+
 import numpy as np
-
 import torch
-
 from src.fedalg import FedAlg
+
 
 class FedCdp(FedAlg):
     """
     coming with opacus
     """
+
     pass
+
 
 class GradBuffer(object):
     def __init__(self, grads, mode="copy"):
@@ -17,7 +19,7 @@ class GradBuffer(object):
         if mode == "zeros":
             for i, grad in enumerate(grads):
                 self._grad[i] = torch.zeros_like(grad)
-        
+
     def __add__(self, grad_buffer):
         grads = copy.deepcopy(self._grad)
         for i, grad in enumerate(grads):

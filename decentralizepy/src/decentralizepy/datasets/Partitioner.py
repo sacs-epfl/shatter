@@ -3,9 +3,7 @@ from random import Random
 import numpy as np
 import torch
 
-
 """ Adapted from https://pytorch.org/tutorials/intermediate/dist_tuto.html """
-
 
 
 class Partition(object):
@@ -198,14 +196,26 @@ class PrePartitioned(DataPartitioner):
 
         # Convert label_dists to a list of lists
         label_dists = [label_dists[str(i)] for i in range(num_clients)]
-        
+
         num_classes = len(label_dists[0])
 
         # Calculate total counts per class across all clients using PyTorch tensors
-        total_counts = torch.tensor([sum(client_dists[c] for client_dists in label_dists) for c in range(num_classes)], dtype=torch.float)
+        total_counts = torch.tensor(
+            [
+                sum(client_dists[c] for client_dists in label_dists)
+                for c in range(num_classes)
+            ],
+            dtype=torch.float,
+        )
 
         # Calculate proportions per class per client using PyTorch tensors
-        proportions = torch.tensor([[client_dists[c] / total_counts[c] for c in range(num_classes)] for client_dists in label_dists], dtype=torch.float)
+        proportions = torch.tensor(
+            [
+                [client_dists[c] / total_counts[c] for c in range(num_classes)]
+                for client_dists in label_dists
+            ],
+            dtype=torch.float,
+        )
 
         # Initialize partitions as lists of lists
         self.partitions = [[] for _ in range(num_clients)]
@@ -219,8 +229,12 @@ class PrePartitioned(DataPartitioner):
 
         # Sort and shuffle test set indices by class
         for c in range(num_classes):
-            class_indices_list = torch.tensor([i for i, item in enumerate(data) if item[1] == c], dtype=torch.long)
-            shuffled_indices = class_indices_list[torch.randperm(len(class_indices_list), generator=rng)]
+            class_indices_list = torch.tensor(
+                [i for i, item in enumerate(data) if item[1] == c], dtype=torch.long
+            )
+            shuffled_indices = class_indices_list[
+                torch.randperm(len(class_indices_list), generator=rng)
+            ]
 
             # Calculate total and per-client item counts
             class_count = len(shuffled_indices)
@@ -241,7 +255,9 @@ class PrePartitioned(DataPartitioner):
             for client_id, num_items in enumerate(per_client_counts):
                 end_index = start_index + num_items
                 test_label_dists[client_id, c] = num_items
-                self.partitions[client_id].extend(shuffled_indices[start_index:end_index].tolist())
+                self.partitions[client_id].extend(
+                    shuffled_indices[start_index:end_index].tolist()
+                )
                 start_index = end_index
 
 
@@ -257,7 +273,7 @@ class PrePartitioned(DataPartitioner):
 
 
 #         num_classes = len(label_dists[0])
-        
+
 #         # Calculate total counts per class across all clients
 #         total_counts = [sum(client_dists[c] for client_dists in label_dists) for c in range(num_classes)]
 
@@ -280,12 +296,12 @@ class PrePartitioned(DataPartitioner):
 #             class_indices_list = [i for i, item in enumerate(data) if item[1] == c]
 #             shuffled_indices = torch.randperm(len(class_indices_list), generator=rng).tolist()
 #             class_indices_list = [class_indices_list[i] for i in shuffled_indices]
-            
+
 #             # Calculate total and per-client item counts
 #             class_count = len(class_indices_list)
 #             per_client_counts = [int(proportions[client_id][c] * class_count) for client_id in range(num_clients)]
 #             distributed_count = sum(per_client_counts)
-            
+
 #             # Adjust for rounding errors without exceeding class_count
 #             while distributed_count < class_count:
 #                 for client_id in range(num_clients):
@@ -294,7 +310,7 @@ class PrePartitioned(DataPartitioner):
 #                     if label_dists[client_id][c] > 0:  # Ensure non-zero proportion
 #                         per_client_counts[client_id] += 1
 #                         distributed_count += 1
-            
+
 #             # Distribute items based on adjusted counts
 #             start_index = 0
 #             for client_id, num_items in enumerate(per_client_counts):

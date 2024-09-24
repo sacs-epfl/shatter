@@ -1,8 +1,6 @@
-import random
-import copy
 import logging
-import math
 import os
+import random
 from collections import deque
 from time import perf_counter
 
@@ -34,7 +32,7 @@ class VNodeReal(VNode):
         """
 
         return self.round_complete[self.iteration] == self.vnodes_per_node
-    
+
     def participate(self):
         """
         Participate in the current round
@@ -43,14 +41,16 @@ class VNodeReal(VNode):
 
         if self.crash_real:
             if self.crashed_last_round:
-                to_crash = self.crash_rng.random() < (self.crash_probability + self.crash_correlation * (1 - self.crash_probability))
+                to_crash = self.crash_rng.random() < (
+                    self.crash_probability
+                    + self.crash_correlation * (1 - self.crash_probability)
+                )
             else:
                 to_crash = self.crash_rng.random() < self.crash_probability
 
             return not to_crash
-    
-        return True
 
+        return True
 
     def run(self):
         """
@@ -60,8 +60,6 @@ class VNodeReal(VNode):
         self.testset = self.dataset.get_testset()
         rounds_to_test = self.test_after
         rounds_to_train_evaluate = self.train_evaluate_after
-        global_epoch = 1
-        change = 1
 
         prev_elapsed_time = 0
 
@@ -104,7 +102,7 @@ class VNodeReal(VNode):
 
             self.iteration = iteration
             to_participate = self.participate()
-            
+
             if to_participate:
                 logging.info("Training this round.")
                 self.trainer.train(self.dataset)
@@ -121,7 +119,6 @@ class VNodeReal(VNode):
             agg_start_time = perf_counter()
             train_time = agg_start_time - start_time
 
-
             if to_participate:
                 to_send_list = self.sharing.get_data_to_send(
                     vnodes_per_node=self.vnodes_per_node, sparsity=self.sparsity
@@ -129,8 +126,9 @@ class VNodeReal(VNode):
                 self.crashed_last_round = False
             else:
                 self.crashed_last_round = True
-                to_send_list = [{"NOT_WORKING": True} for _ in range(self.vnodes_per_node)]
-
+                to_send_list = [
+                    {"NOT_WORKING": True} for _ in range(self.vnodes_per_node)
+                ]
 
             for i, to_send in enumerate(to_send_list):
                 to_send["CHANNEL"] = "VNodeDPSGD"
@@ -166,7 +164,11 @@ class VNodeReal(VNode):
 
                 sender = data["vSource"]
 
-                if data["iteration"] == self.iteration and "NOT_WORKING" not in data and to_participate:
+                if (
+                    data["iteration"] == self.iteration
+                    and "NOT_WORKING" not in data
+                    and to_participate
+                ):
                     received_at_least_once = True
                     self.sharing.forward_averaging(data)
                 elif "NOT_WORKING" not in data:
@@ -174,7 +176,11 @@ class VNodeReal(VNode):
                         self.peer_deques[sender] = deque()
                     self.peer_deques[sender].append(data)
                 else:
-                    logging.info("Virtual node {} of Real node {} is not working".format(sender, self.get_master_node(sender)))
+                    logging.info(
+                        "Virtual node {} of Real node {} is not working".format(
+                            sender, self.get_master_node(sender)
+                        )
+                    )
 
             averaging_deque = dict()
             for neighbor in self.peer_deques:
@@ -194,15 +200,6 @@ class VNodeReal(VNode):
             if received_at_least_once and to_participate:
                 self.sharing.finish_forward_averaging(averaging_deque)
             del averaging_deque
-
-            # if iteration == 0 or rounds_to_train_evaluate == 0:
-            #     torch.save(
-            #         self.model.state_dict(),
-            #         os.path.join(
-            #             self.weights_store_dir,
-            #             "{}_{}_post.pt".format(self.uid, iteration),
-            #         ),
-            #     )
 
             agg_end_time = perf_counter()
             agg_time = agg_end_time - agg_start_time
@@ -247,17 +244,11 @@ class VNodeReal(VNode):
 
             if self.dataset.__testing__ and iteration % self.test_after == 0:
                 eval_start_time = perf_counter()
-                # rounds_to_test = self.test_after * change
                 logging.info("Evaluating on test set.")
                 ta, tl = self.dataset.test(self.model, self.loss)
                 eval_time = perf_counter() - eval_start_time
                 results_dict["test_acc"] = ta
                 results_dict["test_loss"] = tl
-
-                # if global_epoch == 49:
-                #     change *= 2
-
-                # global_epoch += change
 
             results_dict["eval_time"] = eval_time
 
@@ -360,12 +351,20 @@ class VNodeReal(VNode):
             nodeConfigs["threads_per_proc"] if "threads_per_proc" in nodeConfigs else 1
         )
 
-
         crashConfigs = config["CRASH"] if "CRASH" in config else dict()
-        self.crash_real = crashConfigs["crash_real"] if "crash_real" in crashConfigs else False
-        self.crash_probability = crashConfigs["crash_probability"] if "crash_probability" in crashConfigs else 0.0
-        self.crash_correlation = crashConfigs["crash_correlation"] if "crash_correlation" in crashConfigs else 0.0
-
+        self.crash_real = (
+            crashConfigs["crash_real"] if "crash_real" in crashConfigs else False
+        )
+        self.crash_probability = (
+            crashConfigs["crash_probability"]
+            if "crash_probability" in crashConfigs
+            else 0.0
+        )
+        self.crash_correlation = (
+            crashConfigs["crash_correlation"]
+            if "crash_correlation" in crashConfigs
+            else 0.0
+        )
 
         torch.set_num_threads(threads_per_proc)
         torch.set_num_interop_threads(1)
@@ -478,13 +477,6 @@ class VNodeReal(VNode):
             Other arguments
 
         """
-        # total_threads = os.cpu_count()
-        # self.threads_per_proc = 4
-        # self.threads_per_proc = max(
-        #     math.floor(total_threads / mapping.get_local_procs_count()), 1
-        # )
-        # torch.set_num_threads(self.threads_per_proc)
-        # torch.set_num_interop_threads(1)
         self.instantiate(
             rank,
             machine_id,
@@ -501,7 +493,5 @@ class VNodeReal(VNode):
             peer_sampler_uid,
             *args
         )
-        # logging.info(
-        #     "Each proc uses %d threads out of %d.", self.threads_per_proc, total_threads
-        # )
+
         self.run()

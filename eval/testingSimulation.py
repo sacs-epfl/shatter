@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 from shutil import copy
 
@@ -24,7 +23,6 @@ def read_ini(file_path):
 
 if __name__ == "__main__":
     args = utils.get_args()
-    # os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
     Path(args.log_dir).mkdir(parents=True, exist_ok=True)
 

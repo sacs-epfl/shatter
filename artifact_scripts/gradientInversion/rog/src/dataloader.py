@@ -1,15 +1,16 @@
-import os
 import math
+import os
 import pickle
-import numpy as np
-from PIL import Image
 
+import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
 import torchvision.transforms as T
+from PIL import Image
 from torch.optim.optimizer import Optimizer
+from torch.utils.data import DataLoader, Dataset
+
 
 class ImageDataset(Dataset):
     def __init__(self, root_dir, datapair, transform):
@@ -18,10 +19,11 @@ class ImageDataset(Dataset):
         self.transform = transform
 
     def __getitem__(self, index):
-        
-        img_name = os.path.join(self.root_dir, self.datapair[index][0], 
-                       self.datapair[index][1])
-        img = Image.open(img_name).convert('RGB')
+
+        img_name = os.path.join(
+            self.root_dir, self.datapair[index][0], self.datapair[index][1]
+        )
+        img = Image.open(img_name).convert("RGB")
 
         img = self.transform(img)
 
@@ -29,13 +31,13 @@ class ImageDataset(Dataset):
 
     def __len__(self):
         return len(self.datapair)
-    
+
+
 class UserDataset(Dataset):
     def __init__(self, images, labels, type_="mnist"):
-        """Construct a user train_dataset and convert ndarray 
-        """
+        """Construct a user train_dataset and convert ndarray"""
         if min(labels) < 0:
-            labels = (labels).reshape((-1,1)).astype(np.float32)
+            labels = (labels).reshape((-1, 1)).astype(np.float32)
         else:
             labels = (labels).astype(np.int64)
 
@@ -48,22 +50,31 @@ class UserDataset(Dataset):
 
     def __getitem__(self, idx):
         image = self.images[idx]
-        label = self.labels[idx] 
+        label = self.labels[idx]
         return image, label
+
 
 def fetch_trainloader(config, shuffle=True):
     """Loads dataset and returns corresponding data loader."""
-    transform = T.Compose([
-        T.Resize(config.sample_size),
-        T.ToTensor(),
-    ])
-    
+    transform = T.Compose(
+        [
+            T.Resize(config.sample_size),
+            T.ToTensor(),
+        ]
+    )
+
     with open(os.path.join(config.train_data_dir, "datapair.dat"), "rb") as fp:
         record = pickle.load(fp)
 
     datapair = record["data_pair"]
     root_dir = record["root"]
     dataset = ImageDataset(root_dir, datapair, transform)
-    data_loader = DataLoader(dataset=dataset, batch_size=config.batch_size, shuffle=shuffle, num_workers=0, drop_last=True)
+    data_loader = DataLoader(
+        dataset=dataset,
+        batch_size=config.batch_size,
+        shuffle=shuffle,
+        num_workers=0,
+        drop_last=True,
+    )
 
     return data_loader

@@ -1,4 +1,5 @@
 import logging
+import pickle
 
 import torch
 import torch.nn.functional as F
@@ -12,15 +13,13 @@ from decentralizepy.datasets.Partitioner import (
     DataPartitioner,
     DirichletDataPartitioner,
     KShardDataPartitioner,
+    PrePartitioned,
     SimpleDataPartitioner,
-    PrePartitioned
 )
 from decentralizepy.mappings.Mapping import Mapping
 from decentralizepy.models.Model import Model
-import pickle
 
 NUM_CLASSES = 100
-
 
 
 class CIFAR100(Dataset):
@@ -59,7 +58,7 @@ class CIFAR100(Dataset):
         if self.label_distribution is not None:
             with open(self.label_distribution, "rb") as f:
                 label_distribution = pickle.load(f)
-            
+
             self.training_partitions = PrePartitioned(
                 trainset, label_distribution, seed=self.random_seed
             )
@@ -144,7 +143,7 @@ class CIFAR100(Dataset):
         validation_size="",
         label_distribution=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """
         Constructor which reads the data files, instantiates and partitions the dataset
@@ -196,7 +195,7 @@ class CIFAR100(Dataset):
             validation_source,
             validation_size,
             *args,
-            **kwargs
+            **kwargs,
         )
 
         self.num_classes = NUM_CLASSES

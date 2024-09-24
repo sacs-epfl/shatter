@@ -1,14 +1,15 @@
 import pickle
 
 import torch
-
 from networks import nn_registry
-from src.metric import Metrics
-from src.dataloader import fetch_trainloader
-from src import fedlearning_registry
 from src.attack import Attacker, grad_inv
 from src.compress import compress_registry
+from src.dataloader import fetch_trainloader
+from src.metric import Metrics
 from utils import *
+
+from src import fedlearning_registry
+
 
 def main(config_file, **kwargs):
     chunks = kwargs["chunks"] if "chunks" in kwargs else 1
@@ -37,38 +38,44 @@ def main(config_file, **kwargs):
             x, y, onehot, model = preprocess(config, x, y, onehot, model)
 
             # federated learning algorithm on a single device
-            fedalg = fedlearning_registry[config.fedalg](criterion, model, config) 
+            fedalg = fedlearning_registry[config.fedalg](criterion, model, config)
             grad = fedalg.client_grad(x, onehot)
 
             # gradient postprocessing
             if config.compress != "none":
                 compressor = compress_registry[config.compress](config)
                 for i, g in enumerate(grad):
-                    compressed_res = compressor.compress(g, chunk_id=this_chunk, layer_id=i)
+                    compressed_res = compressor.compress(
+                        g, chunk_id=this_chunk, layer_id=i
+                    )
                     grad[i] = compressor.decompress(compressed_res)
 
-            # initialize an attacker and perform the attack 
+            # initialize an attacker and perform the attack
             attacker = Attacker(config, criterion)
             attacker.init_attacker_models(config)
             recon_data = grad_inv(attacker, grad, x, onehot, model, config, logger)
 
-            synth_data, recon_data = attacker.joint_postprocess(recon_data, y)        
+            synth_data, recon_data = attacker.joint_postprocess(recon_data, y)
             # recon_data = synth_data
 
-            # Report the result first 
+            # Report the result first
             logger.info("=== Evaluate the performance ====")
             metrics = Metrics(config)
             snr, ssim, jaccard, lpips = metrics.evaluate(x, recon_data, logger)
-            
-            logger.info("PSNR: {:.3f} SSIM: {:.3f} Jaccard {:.3f} Lpips {:.3f}".format(snr, ssim, jaccard, lpips))
+
+            logger.info(
+                "PSNR: {:.3f} SSIM: {:.3f} Jaccard {:.3f} Lpips {:.3f}".format(
+                    snr, ssim, jaccard, lpips
+                )
+            )
 
             save_batch(output_dir, x, recon_data)
 
-            record = {"snr":snr, "ssim":ssim, "jaccard":jaccard, "lpips":lpips}
-            with open(os.path.join(output_dir, config.fedalg+".dat"), "wb") as fp:
+            record = {"snr": snr, "ssim": ssim, "jaccard": jaccard, "lpips": lpips}
+            with open(os.path.join(output_dir, config.fedalg + ".dat"), "wb") as fp:
                 pickle.dump(record, fp)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     torch.manual_seed(0)
     main("config.yaml")
-

@@ -2,7 +2,6 @@ import copy
 import json
 import logging
 import os
-import sys
 
 import torch
 from torch.nn import CrossEntropyLoss, MSELoss

@@ -1,5 +1,4 @@
 import logging
-from time import sleep
 
 import torch
 
@@ -131,53 +130,6 @@ class VNodeSharing(Sharing):
             end = m["start_index"] + m["params"].shape[0]
             des = m["params"].to(torch.float32)
             return des, start, end
-
-    # def deserialized_model(self, m):
-    #     """
-    #     Convert received dict to a model vector.
-
-    #     Parameters
-    #     ----------
-    #     m : dict
-    #         received dict
-
-    #     Returns
-    #     -------
-    #     state_dict
-    #         state_dict of received
-
-    #     """
-    #     with torch.no_grad():
-    #         m = self.decompress_data(m)
-    #         if self.uid == 3:
-    #             print("Decompressed data...")
-    #         if self.uid == 3:
-    #             print("m...{}".format(m))
-    #         try:
-    #             if self.uid == 3:
-    #                 print("Total length... {}".format(self.total_length))
-    #         except Exception as e:
-    #             print("uid: {} | Exception: {}".format(self.uid, e))
-    #             raise e
-    #         sleep(1)
-    #         start = m["start_index"]
-    #         if self.uid == 3:
-    #             print("Start: {}".format(start))
-    #         sleep(1)
-    #         end = m["start_index"] + m["params"].shape[0]
-    #         if self.uid == 3:
-    #             print("End: {}".format(end))
-    #         sleep(1)
-    #         des = torch.zeros(self.total_length, dtype=torch.float32)
-    #         if self.uid == 3:
-    #             print("des...{}".format(des))
-    #         if self.uid == 3:
-    #             print("Created zero initialization... ")
-    #         sleep(1)
-    #         des[start:end] = torch.tensor(m["params"], dtype=torch.float32)
-    #         if self.uid == 3:
-    #             print("Added to deserialized vector...")
-    #         return des, start, end
 
     def _post_step(self, T):
         """
@@ -314,7 +266,6 @@ class VNodeSharing(Sharing):
                         print("uid: {} | Exception: {}".format(self.uid, e))
                         raise e
                     logging.debug("Deserialized model from neighbor {}".format(n))
-                    # logging.debug("Start: {}, End: {}".format(start, end))
                     T[start:end] += deserializedT
 
                     logging.debug("Added to weights")

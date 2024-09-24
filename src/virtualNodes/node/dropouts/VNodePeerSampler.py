@@ -14,7 +14,7 @@ class VNodePeerSampler(PeerSamplerDynamic):
 
     """
 
-    def get_vids(self, uid = None):
+    def get_vids(self, uid=None):
         """
         Get the list of virtual node IDs of the current node.
 
@@ -30,7 +30,7 @@ class VNodePeerSampler(PeerSamplerDynamic):
         vids = [uid + (j + 1) * n_procs_real for j in range(self.vnodes_per_node)]
         return vids
 
-    def get_master_node(self, uid = None):
+    def get_master_node(self, uid=None):
         """
         Get the master node of the current node.
 
@@ -61,7 +61,13 @@ class VNodePeerSampler(PeerSamplerDynamic):
 
         """
 
-        return [[self.get_master_node(neighbor + self.n_procs_real) for neighbor in neighbor_list_vnode] for neighbor_list_vnode in neighbors]
+        return [
+            [
+                self.get_master_node(neighbor + self.n_procs_real)
+                for neighbor in neighbor_list_vnode
+            ]
+            for neighbor_list_vnode in neighbors
+        ]
 
     def get_neighbors(self, node, iteration=None):
         if iteration != None and self.dynamic == True:
@@ -80,21 +86,26 @@ class VNodePeerSampler(PeerSamplerDynamic):
                 )
             assert iteration in self.graphs
 
-            potential_neighbors = [self.graphs[iteration].neighbors(vid - self.n_procs_real) for vid in self.get_vids(node)]
+            potential_neighbors = [
+                self.graphs[iteration].neighbors(vid - self.n_procs_real)
+                for vid in self.get_vids(node)
+            ]
 
             to_return = self.fix_identifiers(potential_neighbors)
 
             self.messages_received[iteration] += 1
-            if (
-                self.messages_received[iteration]
-                == self.n_procs_real
-            ):
+            if self.messages_received[iteration] == self.n_procs_real:
                 logging.info("Clearing graph in iteration {}".format(iteration))
                 del self.graphs[iteration]
             return to_return
         else:
-            return self.fix_identifiers([self.graph.neighbors(vid - self.n_procs_real) for vid in self.get_vids(node)])
-        
+            return self.fix_identifiers(
+                [
+                    self.graph.neighbors(vid - self.n_procs_real)
+                    for vid in self.get_vids(node)
+                ]
+            )
+
     def run(self):
         """
         Start the peer-sampling service.

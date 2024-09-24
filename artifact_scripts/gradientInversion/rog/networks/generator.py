@@ -1,11 +1,11 @@
 import functools
 
+import networks.bnlayers as layers
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils import spectral_norm
 
-import networks.bnlayers as layers
 
 class Ccgenerator(nn.Module):
     def __init__(self, in_channels=3):
@@ -20,13 +20,15 @@ class Ccgenerator(nn.Module):
         self.which_embedding = nn.Embedding
         bn_linear = self.which_embedding
 
-        self.which_bn = functools.partial(layers.ccbn,
-                        which_linear=bn_linear,
-                        cross_replica=False,
-                        mybn=False,
-                        input_size=1000,
-                        norm_style="bn",
-                        eps=1.e-5)
+        self.which_bn = functools.partial(
+            layers.ccbn,
+            which_linear=bn_linear,
+            cross_replica=False,
+            mybn=False,
+            input_size=1000,
+            norm_style="bn",
+            eps=1.0e-5,
+        )
 
         # Encoder part
         self.ReflectPad = nn.ReflectionPad2d(2)
@@ -44,19 +46,24 @@ class Ccgenerator(nn.Module):
         self.mid = nn.MaxPool2d(kernel_size=2, stride=2)
 
         # Decoder part
-        self.ConvT1 = ConvTransBlock_bn(512, 512, 4, stride=2, padding=1, bn=self.which_bn)
+        self.ConvT1 = ConvTransBlock_bn(
+            512, 512, 4, stride=2, padding=1, bn=self.which_bn
+        )
         self.Conv5 = ConvBlock_bn(512, 512, 3, stride=1, padding=1, bn=self.which_bn)
 
-        self.ConvT2 = ConvTransBlock_bn(768, 768, 4, stride=2, padding=1,bn=self.which_bn)
+        self.ConvT2 = ConvTransBlock_bn(
+            768, 768, 4, stride=2, padding=1, bn=self.which_bn
+        )
         self.Conv6 = ConvBlock_bn(768, 256, 3, stride=1, padding=1, bn=self.which_bn)
 
-        self.ConvT3 = ConvTransBlock_bn(384, 384, 4, stride=2, padding=1, bn=self.which_bn)
+        self.ConvT3 = ConvTransBlock_bn(
+            384, 384, 4, stride=2, padding=1, bn=self.which_bn
+        )
         self.Conv7 = ConvBlock_bn(384, 128, 3, stride=1, padding=1, bn=self.which_bn)
 
         self.Conv8 = nn.Conv2d(192, 64, 3, stride=1, padding=1)
-        self.Conv9= nn.Conv2d(self.in_channels+64, 3, 3, stride=1, padding=1)
-        
-   
+        self.Conv9 = nn.Conv2d(self.in_channels + 64, 3, 3, stride=1, padding=1)
+
     def forward(self, x, y):
         # Encoder part
         x1 = self.Conv1(self.ReflectPad(x))
@@ -73,7 +80,7 @@ class Ccgenerator(nn.Module):
 
         xd = self.ConvT3(torch.cat((xd, x2), dim=1), y)
         xd = self.Conv7(xd, y)
-        
+
         xd = self.Conv8(torch.cat((xd, x1), dim=1))
 
         xd = self.Conv9(torch.cat((xd, x), dim=1))
@@ -87,7 +94,7 @@ class Ccgenerator(nn.Module):
 class Generator(nn.Module):
     def __init__(self, in_channels=3, ResBlocks=1):
         """
-        in_channels:        original image( rgb|gray ) 
+        in_channels:        original image( rgb|gray )
         ResBlocks:          number of residual blocks in the middle part
         imgTrans:           indicate whether or not input image has been normalized
         """
@@ -120,8 +127,7 @@ class Generator(nn.Module):
         self.Conv7 = ConvBlock(384, 128, 3, stride=1, padding=1)
 
         self.Conv8 = nn.Conv2d(192, 64, 3, stride=1, padding=1)
-        self.Conv9= nn.Conv2d(self.in_channels+64, 3, 3, stride=1, padding=1)
-        
+        self.Conv9 = nn.Conv2d(self.in_channels + 64, 3, 3, stride=1, padding=1)
 
     def forward(self, x):
         # Encoder part
@@ -129,10 +135,10 @@ class Generator(nn.Module):
         x2 = self.Conv2(x1)
         x3 = self.Conv3(x2)
         x4 = self.Conv4(x3)
-        
+
         # Resisual Net block
         # xd = self.mid(x4)
-        
+
         # Decode part
         xd = self.ConvT1(x4)
         xd = self.Conv5(xd)
@@ -147,8 +153,7 @@ class Generator(nn.Module):
 
         xd = self.Conv9(torch.cat((xd, x), dim=1))
 
-
-        xd = (torch.tanh(xd) + 1)/2
+        xd = (torch.tanh(xd) + 1) / 2
 
         return xd
 
@@ -163,11 +168,11 @@ class ConvBlock_bn(nn.Module):
         self.use_instance_norm = False
         if isinstance(bn, nn.InstanceNorm2d):
             self.use_instance_norm = True
-        
+
         self.conv = nn.Conv2d(in_channels, out_channels, kernel, stride, padding)
         self.bn = bn(out_channels)
         self.activation = nn.ReLU(inplace=True)
-    
+
     def forward(self, x, y=None):
         if self.use_instance_norm or y is None:
             x = self.bn(self.conv(x))
@@ -176,37 +181,42 @@ class ConvBlock_bn(nn.Module):
         x = self.activation(x)
         return x
 
+
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel, stride, padding):
         super(ConvBlock, self).__init__()
-        
+
         self.conv_block = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel, stride, padding),
             nn.InstanceNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
-    
+
     def forward(self, x):
         return self.conv_block(x)
+
 
 class ConvTransBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel, stride, padding):
         super(ConvTransBlock, self).__init__()
-        
+
         self.convT_block = nn.Sequential(
             nn.ConvTranspose2d(in_channels, out_channels, kernel, stride, padding),
             nn.InstanceNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
-        
+
     def forward(self, x):
         return self.convT_block(x)
+
 
 class ConvTransBlock_bn(nn.Module):
     def __init__(self, in_channels, out_channels, kernel, stride, padding, bn):
         super(ConvTransBlock_bn, self).__init__()
 
-        self.convT = nn.ConvTranspose2d(in_channels, out_channels, kernel, stride, padding)
+        self.convT = nn.ConvTranspose2d(
+            in_channels, out_channels, kernel, stride, padding
+        )
         self.bn = bn(out_channels)
         self.activation = nn.ReLU(inplace=True)
 
@@ -218,25 +228,28 @@ class ConvTransBlock_bn(nn.Module):
 
         return out
 
-def init_weights(module, init_type='normal', gain=0.02):
-    '''
+
+def init_weights(module, init_type="normal", gain=0.02):
+    """
     initialize network's weights
     init_type: normal | xavier | kaiming | orthogonal
-    '''
+    """
     classname = module.__class__.__name__
-    if hasattr(module, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
-        if init_type == 'normal':
+    if hasattr(module, "weight") and (
+        classname.find("Conv") != -1 or classname.find("Linear") != -1
+    ):
+        if init_type == "normal":
             nn.init.normal_(module.weight.data, 0.0, gain)
-        elif init_type == 'xavier':
+        elif init_type == "xavier":
             nn.init.xavier_normal_(module.weight.data, gain=gain)
-        elif init_type == 'kaiming':
-            nn.init.kaiming_normal_(module.weight.data, a=0, mode='fan_in')
-        elif init_type == 'orthogonal':
+        elif init_type == "kaiming":
+            nn.init.kaiming_normal_(module.weight.data, a=0, mode="fan_in")
+        elif init_type == "orthogonal":
             nn.init.orthogonal_(module.weight.data, gain=gain)
 
-        if hasattr(module, 'bias') and module.bias is not None:
+        if hasattr(module, "bias") and module.bias is not None:
             nn.init.constant_(module.bias.data, 0.0)
 
-    elif classname.find('BatchNorm2d') != -1:
+    elif classname.find("BatchNorm2d") != -1:
         nn.init.normal_(module.weight.data, 1.0, gain)
         nn.init.constant_(module.bias.data, 0.0)

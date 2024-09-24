@@ -75,10 +75,6 @@ class VNode(DPSGDWithPeerSampler):
         self.reset_optimizer = reset_optimizer
         self.sent_disconnections = False
 
-        # logging.debug("Rank: %d", self.rank)
-        # logging.debug("type(graph): %s", str(type(self.rank)))
-        # logging.debug("type(mapping): %s", str(type(self.mapping)))
-
     def init_comm(self, comm_configs):
         """
         Instantiate communication module from config.
@@ -152,7 +148,7 @@ class VNode(DPSGDWithPeerSampler):
         """
         raise NotImplementedError
 
-    def get_vids(self, uid = None):
+    def get_vids(self, uid=None):
         """
         Get the list of virtual node IDs of the current node.
 
@@ -168,7 +164,7 @@ class VNode(DPSGDWithPeerSampler):
         vids = [uid + (j + 1) * n_procs_real for j in range(self.vnodes_per_node)]
         return vids
 
-    def get_master_node(self, uid = None):
+    def get_master_node(self, uid=None):
         """
         Get the master node of the current node.
 

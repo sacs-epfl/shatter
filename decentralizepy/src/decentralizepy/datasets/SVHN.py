@@ -1,4 +1,5 @@
 import logging
+import pickle
 
 import torch
 import torch.nn.functional as F
@@ -12,15 +13,13 @@ from decentralizepy.datasets.Partitioner import (
     DataPartitioner,
     DirichletDataPartitioner,
     KShardDataPartitioner,
+    PrePartitioned,
     SimpleDataPartitioner,
-    PrePartitioned
 )
 from decentralizepy.mappings.Mapping import Mapping
 from decentralizepy.models.Model import Model
-import pickle
 
 NUM_CLASSES = 10
-
 
 
 class SVHN(Dataset):
@@ -36,7 +35,7 @@ class SVHN(Dataset):
         """
         logging.info("Loading training set.")
         trainset = torchvision.datasets.SVHN(
-            root=self.train_dir, split='train', download=True, transform=self.transform
+            root=self.train_dir, split="train", download=True, transform=self.transform
         )
 
         if self.__validating__ and self.validation_source == "Train":
@@ -59,7 +58,7 @@ class SVHN(Dataset):
         if self.label_distribution is not None:
             with open(self.label_distribution, "rb") as f:
                 label_distribution = pickle.load(f)
-            
+
             self.training_partitions = PrePartitioned(
                 trainset, label_distribution, seed=self.random_seed
             )
@@ -115,7 +114,7 @@ class SVHN(Dataset):
         logging.info("Loading testing set.")
 
         self.testset = torchvision.datasets.SVHN(
-            root=self.test_dir, split='test', download=True, transform=self.transform
+            root=self.test_dir, split="test", download=True, transform=self.transform
         )
 
         if self.__validating__ and self.validation_source == "Test":
@@ -144,7 +143,7 @@ class SVHN(Dataset):
         validation_size="",
         label_distribution=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """
         Constructor which reads the data files, instantiates and partitions the dataset
@@ -196,7 +195,7 @@ class SVHN(Dataset):
             validation_source,
             validation_size,
             *args,
-            **kwargs
+            **kwargs,
         )
 
         self.num_classes = NUM_CLASSES

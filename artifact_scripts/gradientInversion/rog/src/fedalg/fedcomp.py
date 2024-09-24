@@ -1,13 +1,13 @@
 import copy
 
 import torch
-
 from src.fedalg import FedAlg
+
 
 class FedQuant(FedAlg):
     def __init__(self, criterion, model, config):
         super().__init__(criterion, model, half=config.half)
-    
+
     def client_grad(self, x, y):
 
         out = self.model(x)
@@ -33,18 +33,22 @@ class UniformQuantizer:
         """
         max_val = torch.max(arr.abs())
         sign_arr = arr.sign()
-        quantized_arr = (arr/max_val)*self.quantbound
+        quantized_arr = (arr / max_val) * self.quantbound
         quantized_arr = torch.abs(quantized_arr)
         quantized_arr = torch.round(quantized_arr).to(torch.int)
-        
-        quantized_set = dict(max_val=max_val, signs=sign_arr, quantized_arr=quantized_arr)
+
+        quantized_set = dict(
+            max_val=max_val, signs=sign_arr, quantized_arr=quantized_arr
+        )
         return quantized_set
-    
+
     def dequantize(self, quantized_set):
         """
         dequantize a given array which is uniformed quantized.
         """
-        coefficients = quantized_set["max_val"]/self.quantbound  * quantized_set["signs"] 
-        dequant_arr =  coefficients * quantized_set["quantized_arr"]
+        coefficients = (
+            quantized_set["max_val"] / self.quantbound * quantized_set["signs"]
+        )
+        dequant_arr = coefficients * quantized_set["quantized_arr"]
 
         return dequant_arr

@@ -1,8 +1,9 @@
-import torch
-import torch.nn.functional as F
+import warnings
 from collections import OrderedDict
 from functools import partial
-import warnings
+
+import torch
+import torch.nn.functional as F
 
 
 class MetaNN(torch.nn.Module):
@@ -17,7 +18,6 @@ class MetaNN(torch.nn.Module):
         self.net = net
         self.parameters = OrderedDict(net.named_parameters())
 
-
     def forward(self, inputs, parameters=None):
         """Live Patch ... :> ..."""
         if parameters is None:
@@ -29,7 +29,7 @@ class MetaNN(torch.nn.Module):
         for i, (name, module) in enumerate(self.net.named_modules()):
             if i == 0:
                 continue
-            
+
             if isinstance(module, torch.nn.Conv2d):
                 ext_weight = next(param_gen)
                 if module.bias is not None:
@@ -38,9 +38,16 @@ class MetaNN(torch.nn.Module):
                     ext_bias = None
 
                 method_pile.append(module.forward)
-                module.forward = partial(F.conv2d, weight=ext_weight, bias=ext_bias, stride=module.stride,
-                                         padding=module.padding, dilation=module.dilation, groups=module.groups)
-            
+                module.forward = partial(
+                    F.conv2d,
+                    weight=ext_weight,
+                    bias=ext_bias,
+                    stride=module.stride,
+                    padding=module.padding,
+                    dilation=module.dilation,
+                    groups=module.groups,
+                )
+
             elif isinstance(module, torch.nn.BatchNorm2d):
                 if module.momentum is None:
                     exponential_average_factor = 0.0
@@ -51,17 +58,25 @@ class MetaNN(torch.nn.Module):
                     if module.num_batches_tracked is not None:
                         module.num_batches_tracked += 1
                         if module.momentum is None:  # use cumulative moving average
-                            exponential_average_factor = 1.0 / float(module.num_batches_tracked)
+                            exponential_average_factor = 1.0 / float(
+                                module.num_batches_tracked
+                            )
                         else:  # use exponential moving average
                             exponential_average_factor = module.momentum
-                
+
                 ext_weight = next(param_gen)
                 ext_bias = next(param_gen)
                 method_pile.append(module.forward)
-                module.forward = partial(F.batch_norm, running_mean=module.running_mean, running_var=module.running_var,
-                                         weight=ext_weight, bias=ext_bias,
-                                         training=module.training or not module.track_running_stats,
-                                         momentum=exponential_average_factor, eps=module.eps)
+                module.forward = partial(
+                    F.batch_norm,
+                    running_mean=module.running_mean,
+                    running_var=module.running_var,
+                    weight=ext_weight,
+                    bias=ext_bias,
+                    training=module.training or not module.track_running_stats,
+                    momentum=exponential_average_factor,
+                    eps=module.eps,
+                )
 
             elif isinstance(module, torch.nn.Linear):
                 lin_weights = next(param_gen)
@@ -78,7 +93,9 @@ class MetaNN(torch.nn.Module):
                 pass
             else:
                 # Warn for other containers
-                warnings.warn(f'Patching for module {module.__class__} is not implemented.')
+                warnings.warn(
+                    f"Patching for module {module.__class__} is not implemented."
+                )
 
         output = self.net(inputs)
 

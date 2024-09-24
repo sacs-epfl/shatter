@@ -1,6 +1,6 @@
-import logging
-from time import sleep
 import copy
+import logging
+
 import torch
 
 from decentralizepy.sharing.Sharing import Sharing

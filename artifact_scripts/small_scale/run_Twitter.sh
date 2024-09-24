@@ -11,17 +11,17 @@ python_bin=$2
 
 echo Computing Twitter/EL
 Twitter/EL/run.sh $nfs_home $python_bin
-eval/plot_csv_acc.py Twitter/EL
-eval/evaluate_attack.py Twitter/EL
+$python_bin/python $nfs_home/eval/plot_csv_acc.py Twitter/EL
+$python_bin/python $nfs_home/eval/evaluate_attack.py Twitter/EL
 
 echo Computing Twitter/Muffliato009
 Twitter/Muffliato009/run.sh $nfs_home $python_bin
-eval/plot_csv_acc.py Twitter/Muffliato009
-eval/evaluate_attack.py Twitter/Muffliato009
+$python_bin/python $nfs_home/eval/plot_csv_acc.py Twitter/Muffliato009
+$python_bin/python $nfs_home/eval/evaluate_attack.py Twitter/Muffliato009
 
 echo Computing Twitter/VNodes2
 Twitter/VNodes2/run.sh $nfs_home $python_bin
-eval/plot_csv_acc.py Twitter/VNodes2
-eval/evaluate_attack.py Twitter/VNodes2
+$python_bin/python $nfs_home/eval/plot_csv_acc.py Twitter/VNodes2
+$python_bin/python $nfs_home/eval/evaluate_attack.py Twitter/VNodes2
 
 echo Done Twitter!
