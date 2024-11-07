@@ -18,12 +18,17 @@ Out of memory issues result in processes waiting for messages from killed proces
 To run the experiments at the full scale, one requires access to 25 g5.2x large instances from AWS. We unfortunately cannot provide access to these.
 
 ### Hardware Requirements
-No special hardware needed.
+An Nvidia GPU is required to run this artifact.
+The artifacts were tested with Nvidia A100 80GB GPU, NVIDIA T4 GPUs and NVIDIA Corporation GA100GL A30 PCIe (rev a1).
+Readers can determine that they have a CUDA compatible GPU using the following command, based on the [Nvidia Cuda installation guide](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#verify-you-have-a-cuda-capable-gpu)
+
+```shell
+lscpi | grep -i nvidia
+```
+
 
 ### Software Requirements
 We tested the artifacts on Ubuntu 22.04 and Python 3.10. This should however not be a strict requirement. Dependencies can be installed through `requirements.txt`.
-Git-LFS is essential to download the datasets and the models.
-Use `git lfs pull` to ensure large files are downloaded after cloning.
 
 ### Estimated Time and Storage Consumption
 Each experiment should take roughly an hour. So, in total, the experiments should take ~5.5 hours.
@@ -36,6 +41,14 @@ All time measurements were done when using 1 CPU and 1 Nvidia A100 80GB GPU.
 The artifact code and data can be accessed via [https://github.com/sacs-epfl/shatter](https://github.com/sacs-epfl/shatter). This is the lab's public Github.
 We also provide a Dockerfile in the repository and the docker image on the Docker Hub as `rishis8/shatter-artifact-pets2025:latest`.
 When cloning directly from the Github repository, git-lfs is required to download the datasets and models.
+[Readers can install Git-Lfs following these official instructions](https://github.com/git-lfs/git-lfs?tab=readme-ov-file#getting-started).
+Use `git lfs pull` to ensure large files are downloaded after cloning.
+
+```shell
+    git clone https://github.com/sacs-epfl/shatter.git
+    git switch -c shatter-pets-2025
+    git lfs pull
+```
 
 ### Set up the environment (Only for Functional and Reproduced badges)
 We recommend using the Docker image (`rishis8/shatter-artifact-pets2025:latest`) since everything is already set up. In all further instructions, we assume that the default directory is the `shatter` repository root. In the docker image, this is `/root/shatter`.

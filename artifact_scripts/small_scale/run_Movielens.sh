@@ -1,28 +1,19 @@
 #!/bin/bash
 
-# Check if the number of arguments is exactly 2
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <root of shatter repository> <environment python executable folder, e.g. ~/.conda/envs/venv/bin/>"
-    exit 1
-fi
+set -euxo pipefail
 
-nfs_home=$1
-python_bin=$2
+echo Computing EL on Movielens
+cd $SHATTER_HOME/artifact_scripts/small_scale/Movielens
+$SHATTER_HOME/eval/run_helper.sh 8 501 $(pwd)/config_EL.ini $SHATTER_HOME/eval/testingSimulation.py 100 100 $SHATTER_HOME/eval/data/movielens $SHATTER_HOME/eval/data/movielens
 
+echo Computing Muffliato on Movielens
+$SHATTER_HOME/eval/run_helper.sh 8 5001 $(pwd)/config_Muffliato025.ini $SHATTER_HOME/eval/testingSimulation.py 100 100 $SHATTER_HOME/eval/data/movielens $SHATTER_HOME/eval/data/movielens
 
-echo Computing Movielens/EL
-Movielens/EL/run.sh $nfs_home $python_bin
-$python_bin/python $nfs_home/eval/plot_csv_acc.py Movielens/EL
-$python_bin/python $nfs_home/eval/evaluate_attack.py Movielens/EL
+echo Computing Shatter on Movielens
+$SHATTER_HOME/eval/run_helper.sh 8 501 $(pwd)/config_Shatter2.ini $SHATTER_HOME/eval/testingSimulation.py 100 100 $SHATTER_HOME/eval/data/movielens $SHATTER_HOME/eval/data/movielens
 
-echo Computing Movielens/Muffliato025
-Movielens/Muffliato025/run.sh $nfs_home $python_bin
-$python_bin/python $nfs_home/eval/plot_csv_acc.py Movielens/Muffliato025
-$python_bin/python $nfs_home/eval/evaluate_attack.py Movielens/Muffliato025
-
-echo Computing Movielens/VNodes2
-Movielens/VNodes2/run.sh $nfs_home $python_bin
-$python_bin/python $nfs_home/eval/plot_csv_acc.py Movielens/VNodes2
-$python_bin/python $nfs_home/eval/evaluate_attack.py Movielens/VNodes2
+echo "Making CSVs and Plots for Movielens in ./Movielens"
+python $SHATTER_HOME/eval/plot_csv_acc.py .
+python $SHATTER_HOME/eval/evaluate_attack.py .
 
 echo Done Movielens!

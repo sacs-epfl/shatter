@@ -1,27 +1,19 @@
 #!/bin/bash
 
-# Check if the number of arguments is exactly 2
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <root of shatter repository> <environment python executable folder, e.g. ~/.conda/envs/venv/bin/>"
-    exit 1
-fi
+set -euxo pipefail
 
-nfs_home=$1
-python_bin=$2
+echo Computing EL on Twitter
+cd $SHATTER_HOME/artifact_scripts/small_scale/Twitter
+$SHATTER_HOME/eval/run_helper.sh 4 51 $(pwd)/config_EL.ini $SHATTER_HOME/eval/testingSimulation.py 10 10 $SHATTER_HOME/eval/data/sent140/train $SHATTER_HOME/eval/data/sent140/test
 
-echo Computing Twitter/EL
-Twitter/EL/run.sh $nfs_home $python_bin
-$python_bin/python $nfs_home/eval/plot_csv_acc.py Twitter/EL
-$python_bin/python $nfs_home/eval/evaluate_attack.py Twitter/EL
+echo Computing Muffliato on Twitter
+$SHATTER_HOME/eval/run_helper.sh 4 501 $(pwd)/config_Muffliato009.ini $SHATTER_HOME/eval/testingMuffliato.py 10 10 $SHATTER_HOME/eval/data/sent140/train $SHATTER_HOME/eval/data/sent140/test
 
-echo Computing Twitter/Muffliato009
-Twitter/Muffliato009/run.sh $nfs_home $python_bin
-$python_bin/python $nfs_home/eval/plot_csv_acc.py Twitter/Muffliato009
-$python_bin/python $nfs_home/eval/evaluate_attack.py Twitter/Muffliato009
+echo Computing Shatter on Twitter
+$SHATTER_HOME/eval/run_helper.sh 4 51 $(pwd)/config_Shatter2.ini $SHATTER_HOME/eval/testingSimulation.py 10 10 $SHATTER_HOME/eval/data/sent140/train $SHATTER_HOME/eval/data/sent140/test
 
-echo Computing Twitter/VNodes2
-Twitter/VNodes2/run.sh $nfs_home $python_bin
-$python_bin/python $nfs_home/eval/plot_csv_acc.py Twitter/VNodes2
-$python_bin/python $nfs_home/eval/evaluate_attack.py Twitter/VNodes2
+echo Making CSVs and Plots for Twitter in ./Twitter
+python $SHATTER_HOME/eval/plot_csv_acc.py .
+python $SHATTER_HOME/eval/evaluate_attack.py .
 
 echo Done Twitter!

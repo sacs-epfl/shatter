@@ -7,6 +7,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 MAX_ITERATION = None
+MUFFLIATO_ROUNDS = 10
 
 
 def get_stats(l):
@@ -44,6 +45,8 @@ def plot(
     plt.title(title)
     plt.xlabel(xlabel)
     x_axis = np.array(list(means.keys()))
+    if "Muffliato" in label:
+        x_axis = x_axis // MUFFLIATO_ROUNDS
     y_axis = np.array(list(means.values()))
     err = np.array(list(stdevs.values()))
     plt.plot(x_axis, y_axis, label=label)

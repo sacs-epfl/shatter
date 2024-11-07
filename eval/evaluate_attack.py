@@ -8,6 +8,7 @@ import torch
 from matplotlib.ticker import MaxNLocator
 from sklearn.metrics import roc_auc_score, roc_curve
 
+MUFFLIATO_ROUNDS = 10
 
 def process_directory(directory_path):
     attack_dicts_algorithms = {}
@@ -272,6 +273,9 @@ if __name__ == "__main__":
             alpha=0.1,
             lw=2,
         )
+        if "Muffliato" in label:
+            iterations_to_attack = torch.tensor(iterations_to_attack)
+            iterations_to_attack = iterations_to_attack // MUFFLIATO_ROUNDS
         ax2.plot(iterations_to_attack, auc_means_iterations, label=label)
         ax2.fill_between(
             iterations_to_attack,
@@ -289,7 +293,7 @@ if __name__ == "__main__":
     ax1.set_ylim(0.5, 1.0)
 
     ax2.set_title("MIA per Iteration")
-    ax2.set_xlabel("Iterations")
+    ax2.set_xlabel("Training Epochs")
     ax2.set_ylabel("AUC")
     ax2.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax2.legend(loc="lower right")
@@ -359,6 +363,9 @@ if __name__ == "__main__":
             alpha=0.1,
             lw=2,
         )
+        if "Muffliato" in label:
+            iterations_to_attack = torch.tensor(iterations_to_attack)
+            iterations_to_attack = iterations_to_attack // MUFFLIATO_ROUNDS
         ax2.plot(iterations_to_attack, mean_iterations, label=label)
         ax2.fill_between(
             iterations_to_attack,
@@ -375,7 +382,7 @@ if __name__ == "__main__":
     ax1.legend(loc="upper left")
 
     ax2.set_title("Linkability Attack per Iteration")
-    ax2.set_xlabel("Iterations")
+    ax2.set_xlabel("Training Epochs")
     ax2.set_ylabel("Linkability Attack Success (%)")
     ax2.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax2.legend(loc="upper left")
