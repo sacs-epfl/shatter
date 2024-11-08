@@ -7,10 +7,16 @@ nvcc --version
 echo "For smoother execution, the output above should match Cuda compilation tools, release 12.3, V12.3.107\nBuild cuda_12.3.r12.3/compiler.33567101_0"
 
 #Check that transformers and torch can be imported in python venv
-echo "Activating Conda"
-source ${CONDA_PREFIX}/bin/activate
-conda activate venv && conda list | grep transformers
-conda activate venv && conda list | grep torch
+
+# Check if the 'conda' command is available
+if ! command -v conda &> /dev/null; then
+    echo "Activating Conda"
+    source ${CONDA_PREFIX}/bin/activate
+    conda activate venv
+fi
+
+conda list -n venv | grep transformers
+conda list -n venv | grep torch
 
 # Check the installation of libgl1-mesa-glx
 if ! dpkg-query -W -f='${Status}' libgl1-mesa-glx 2>/dev/null | grep -q "install ok installed"; then

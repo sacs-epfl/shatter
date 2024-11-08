@@ -4,6 +4,8 @@ num_clients=1
 
 # Compute the results
 
+cd $SHATTER_HOME/artifact_scripts/gradientInversion/rog
+
 config_file=config_fedavg_lenet.yaml
 python attack_fedavg.py $config_file $num_clients
 
