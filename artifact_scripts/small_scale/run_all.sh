@@ -1,18 +1,12 @@
 #!/bin/bash
 
-# Check if the number of arguments is exactly 2
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <root of shatter repository> <environment python executable folder, e.g. ~/.conda/envs/venv/bin/>"
-    exit 1
-fi
+set -euxo pipefail
 
-nfs_home=$1
-python_bin=$2
+cd $SHATTER_HOME/artifact_scripts/small_scale
 
-./run_CIFAR10.sh $nfs_home $python_bin
+./run_CIFAR10.sh
 
-./run_Movielens.sh $nfs_home $python_bin
+./run_Movielens.sh
 
-./run_Twitter.sh $nfs_home $python_bin
-
-echo Done Everything!
+./run_Twitter.sh
+echo "Done Everything!"

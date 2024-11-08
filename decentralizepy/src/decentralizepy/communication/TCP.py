@@ -160,7 +160,7 @@ class TCP(Communication):
         """
         sender = int(sender.decode())
         buffer = BytesIO(data)
-        data = torch.load(buffer)
+        data = torch.load(buffer, weights_only=False)
         return sender, data
 
     def init_connection(self, neighbor):

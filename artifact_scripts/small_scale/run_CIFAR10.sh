@@ -1,27 +1,19 @@
 #!/bin/bash
 
-# Check if the number of arguments is exactly 2
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <absolute path of root of shatter repository> <environment python executable folder, e.g. ~/.conda/envs/venv/bin/>"
-    exit 1
-fi
+set -euxo pipefail
 
-nfs_home=$1
-python_bin=$2
+echo "Computing EL on CIFAR10"
+cd $SHATTER_HOME/artifact_scripts/small_scale/CIFAR10
+$SHATTER_HOME/eval/run_helper.sh 8 51 $(pwd)/config_EL.ini $SHATTER_HOME/eval/testingSimulation.py 10 10 $SHATTER_HOME/eval/data/CIFAR10 $SHATTER_HOME/eval/data/CIFAR10
 
-echo Computing CIFAR10/EL
-CIFAR10/EL/run.sh $nfs_home $python_bin
-$python_bin/python $nfs_home/eval/plot_csv_acc.py CIFAR10/EL
-$python_bin/python $nfs_home/eval/evaluate_attack.py CIFAR10/EL
+echo "Computing Muffliato on CIFAR10"
+$SHATTER_HOME/eval/run_helper.sh 8 501 $(pwd)/config_Muffliato05.ini $SHATTER_HOME/eval/testingMuffliato.py 10 10 $SHATTER_HOME/eval/data/CIFAR10 $SHATTER_HOME/eval/data/CIFAR10
 
-echo Computing CIFAR10/Muffliato05
-CIFAR10/Muffliato05/run.sh $nfs_home $python_bin
-$python_bin/python $nfs_home/eval/plot_csv_acc.py CIFAR10/Muffliato05
-$python_bin/python $nfs_home/eval/evaluate_attack.py CIFAR10/Muffliato05
+echo "Computing Shatter on CIFAR10"
+$SHATTER_HOME/eval/run_helper.sh 8 51 $(pwd)/config_Shatter2.ini $SHATTER_HOME/eval/testingSimulation.py 10 10 $SHATTER_HOME/eval/data/CIFAR10 $SHATTER_HOME/eval/data/CIFAR10
 
-echo Computing CIFAR10/VNodes2
-CIFAR10/VNodes2/run.sh $nfs_home $python_bin
-$python_bin/python $nfs_home/eval/plot_csv_acc.py CIFAR10/VNodes2
-$python_bin/python $nfs_home/eval/evaluate_attack.py CIFAR10/VNodes2
+echo "Making CSVs and Plots for CIFAR10 in ./CIFAR10"
+python $SHATTER_HOME/eval/plot_csv_acc.py .
+python $SHATTER_HOME/eval/evaluate_attack.py .
 
-echo Done CIFAR10!
+echo "Done CIFAR10!"
