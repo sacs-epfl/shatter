@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          lfs: true # Enable Git lfs
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
