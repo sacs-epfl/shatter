@@ -9,7 +9,7 @@ Decentralized Learning (DL) enables collaborative learning without a server and 
 Installation
 ============
 
-Before cloning, ensure that ypou have Git LFS installed. If not, you can install it using the following command:
+Before cloning, ensure that you have Git LFS installed. If not, you can install it using the following command:
 
 .. code-block:: bash
 
@@ -19,7 +19,7 @@ To install the necessary dependencies, use the following command:
 
 .. code-block:: bash
 
-    pip install -r requirements.txt && pip install --editable . && pip install -r artifact_scripts/gradientInversion/rog/requirements.txt
+    pip install -r requirements_base.txt && pip install -r requirements_all.txt
 
 Usage
 =====

@@ -6,7 +6,7 @@ FROM nvidia/cuda:12.3.2-devel-ubuntu22.04
 # Set this argument as:
 #  docker build --build-arg TORCH_CUDA_ARCH_LIST=Turing .
 ARG TORCH_CUDA_ARCH_LIST
-ENV TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST:Turing}
+ENV TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST:-}
 
 # Update and install required packages
 RUN apt-get update && apt-get install -y \
@@ -26,8 +26,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     libgl1-mesa-glx \
-    git-lfs \
-    nvidia-cuda-toolkit
+    git-lfs
 
 # Create a directory called 'shatter' in the home directory
 RUN mkdir -p /root/shatter
@@ -38,11 +37,6 @@ ENV SHATTER_HOME=/root/shatter
 # Copy the contents of the current folder into the 'shatter' directory
 COPY . $SHATTER_HOME
 
-# # Unzip ImangeNet Validation Data
-# WORKDIR $SHATTER_HOME/artifact_scripts/gradientInversion/rog/
-# RUN unzip data.zip
-# RUN rm data.zip
-
 WORKDIR $SHATTER_HOME
 # This is required to install Conda
 ENV CONDA_PREFIX=${SHATTER_HOME}/.conda
@@ -51,7 +45,6 @@ RUN bash prerequisites.sh
 
 RUN bash testing-script.sh
 
-ENV VENV_PATH=${CONDA_PREFIX}/envs/venv/bin
 # Run experiment 1
 #RUN cd $SHATTER_HOME/artifact_scripts/gradientInversion/rog && ./run.sh
 ## Run experiment 2

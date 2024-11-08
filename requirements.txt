@@ -1,6 +1,0 @@
---editable ./decentralizepy[dev]
-slack
-slackclient
-tqdm
-transformers
---editable .

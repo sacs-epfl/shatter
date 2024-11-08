@@ -9,17 +9,15 @@ else
     echo "The environment variable SHATTER_HOME is set to: $SHATTER_HOME"
 fi
 
-if [ -z "$CONDA_PREFIX" ]
+if [ -d "${CONDA_PREFIX}" ]
 then
+    echo "The environment variable CONDA_PREFIX is set to: $CONDA_PREFIX"
+else
     # Install Miniconda
-    export CONDA_PREFIX=$SHATTER_HOME/.conda
     echo "Installing Miniconda"
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
     bash miniconda.sh -b -p ${CONDA_PREFIX}
     rm miniconda.sh
-    # mkdir -p $SHATTER_HOME/.conda && 
-else
-    echo "The environment variable CONDA_PREFIX is set to: $CONDA_PREFIX"
 fi
 
 echo "Activating Conda"
@@ -30,18 +28,20 @@ conda init --all
 cd $SHATTER_HOME
 
 echo "Creating a Python virtual environment"
-# Setting up and activating a Python virtual environment with Python 3.10
-conda create -n venv python=3.10
+# Setting up and activating a Python virtual environment with Python 3.11
+conda create -y -n venv python=3.11
 conda activate venv
 
 echo "Installing Python dependencies through Conda"
 # Upgrading pip and setuptools
 conda run -n venv pip install --upgrade pip
 conda run -n venv pip install --upgrade setuptools
-conda run -n venv pip install -r requirements.txt
+conda run -n venv pip install -r requirements_base.txt
+conda run -n venv pip install -r requirements_all.txt
 
+
+# Unzip ImageNet data for the gradient inversion
 cd $SHATTER_HOME/artifact_scripts/gradientInversion/rog/
-echo "If the following command fails to build wheels, libgl1-mesa-glx is missing. Just apt install it."
-conda run -n venv pip install -r requirements.txt
+#echo "If the following command fails to build wheels, libgl1-mesa-glx is missing. Just apt install it."
 unzip data.zip
 rm data.zip
