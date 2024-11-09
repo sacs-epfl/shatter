@@ -2,6 +2,14 @@
 
 set -euxo pipefail
 
+# Check if the 'conda' command is available
+if ! command -v conda &> /dev/null; then
+    echo "Activating Conda"
+    source ${CONDA_PREFIX}/bin/activate
+fi
+
+conda activate venv
+
 echo Computing EL on Twitter
 cd $SHATTER_HOME/artifact_scripts/small_scale/Twitter
 $SHATTER_HOME/eval/run_helper.sh 4 51 $(pwd)/config_EL.ini $SHATTER_HOME/eval/testingSimulation.py 10 10 $SHATTER_HOME/eval/data/sent140/train $SHATTER_HOME/eval/data/sent140/test

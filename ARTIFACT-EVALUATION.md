@@ -72,26 +72,32 @@ sudo apt-get -y install cudnn-cuda-12
 The project can also be built with Docker.
 For this, please first install Docker by followiung the official website: [https://docs.docker.com/engine/install/ubuntu/](https://docs.docker.com/engine/install/ubuntu/).
 
+[A Beginner’s Guide to NVIDIA Container Toolkit on Docker](https://medium.com/@u.mele.coding/a-beginners-guide-to-nvidia-container-toolkit-on-docker-92b645f92006) is a good reference to getting started with CUDA Docker containers. We describe important steps below.
+
 In addition to the CUDA toolkit installed above, install the [Nvidia Container toolkit](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) to pass through the GPU drivers to the container engine (Docker daemon). Please refer to the [official website](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installing-the-nvidia-container-toolkit) to download this toolkit and configure Docker to use it. 
 Remember to restart the Docker daemon after installing the toolkit.
 
+Adding Nvidia GPG Keys and Repository:
 ```shell
-curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg   && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list |     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' |     sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-sudo apt-get update
-sudo apt-get install -y nvidia-container-toolkit
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg   
+&& curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | 
+sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' |  
+sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+```
+
+Installing the toolkit and restarting docker:
+```shell
+sudo apt-get update && \
+sudo apt-get install -y nvidia-container-toolkit && \
+sudo nvidia-ctk runtime configure --runtime=docker  && \
 sudo systemctl restart docker
 ```
 
-Test the correctness of the docker + cuda installation with the following docker container:
+Test the correctness of the docker + cuda installation with the following docker container and check that the GPU is detected within the container:
 ```shell
-docker run --rm --gpus all nvidia/cuda:12.3.2-devel-ubuntu22.04 nvcc --version
+docker run --rm --gpus all nvidia/cuda:12.3.2-devel-ubuntu22.04 nvcc --version && nvidia-smi
 ```
-This should give you the CUDA version 12.3.
-
-Check that the GPU is detected within the container:
-```shell
-docker run --rm --gpus all nvidia/cuda:12.3.2-devel-ubuntu22.04 nvidia-smi
-```
+This should give you the CUDA version 12.3 and your GPU should show up in the `nvidia-smi` output.
 
 
 ### Estimated Time and Storage Consumption
@@ -113,8 +119,8 @@ When cloning directly from the Github repository, git-lfs is required to downloa
 Use `git lfs pull` to ensure large files are downloaded after cloning.
 
 ```shell
-    git clone https://github.com/sacs-epfl/shatter.git
-    git switch -c shatter-pets-2025
+    git clone https://github.com/sacs-epfl/shatter.git && cd shatter && \
+    git switch -c shatter-pets-2025 && \
     git lfs pull
 ```
 
@@ -131,19 +137,19 @@ In `docker-build.sh`, update the ```TOTCH_CUDA_ARCH_LIST``` with your microarchi
 ./docker-build.sh
 ```
 
-After the docker build completes, remember to check your installation of Nvidia container toolkit as described in Software Requirements above. The `nvidia-smi` and `nvcc --version` commands should succeed from within the container (See Requirements for Building with Docker section above).
+After the docker build completes, remember to check your installation of Nvidia container toolkit as described in [Software Requirements](#software-requirements) above. The `nvidia-smi` and `nvcc --version` commands should succeed from within the container (See [Section Requirements for Building with Docker](#requirements-for-building-with-docker) above).
 
 To run the image, use the following command:
 ```shell
 ./docker-run.sh
 ```
-To run the prebuilt image, replace the target in `docker-run.sh` from ```shatter-artifacts``` to ```rishis8/shatter-artifact-pets2025```.
+To run the prebuilt image, replace the target (flagged with -t) in `docker-run.sh` from ```shatter-artifacts``` to ```rishis8/shatter-artifact-pets2025:latest```.
 
 #### Setup without Docker
 It is important to install ```libgl1-mesa-glx```.
 
 ```shell
-sudo apt-get update && sudo apt-get install libgl1-mesa-glx
+sudo apt-get update && sudo apt-get -y install libgl1-mesa-glx
 ```
 
 If not using docker, set ```$SHATTER_HOME``` to the root of `shatter` repository.
@@ -156,16 +162,7 @@ Then set up the environment with the available script:
 ```
 
 ### Testing the Environment (Only for Functional and Reproduced badges)
-When using Docker, check the Host and Container are working correctly with GPUs:
-```shell
-docker run --rm --gpus all nvidia/cuda:12.3.2-devel-ubuntu22.04 nvcc --version
-```
-This should give you the CUDA version 12.3.
-
-Check that the GPU is detected within the container:
-```shell
-docker run --rm --gpus all nvidia/cuda:12.3.2-devel-ubuntu22.04 nvidia-smi
-```
+When using Docker, check the Host and Container are working correctly with GPUs as described in [Section Requirements for Building with Docker](#requirements-for-building-with-docker) of this file.
 
 Finally, use the `testing-script.sh` to see if everything is correct:
 ```shell
@@ -209,18 +206,35 @@ Sections 6.2 and 6.3 demonstrate this.
 ### Experiments 
 
 #### Experiment 1: Gradient-inversion attack
-- Run `$SHATTER_HOME/artifact_scripts/gradientInversion/rog/run.sh`. This should take ~15 minutes and about 30 MBs of space because of reconstructed images.
-- Reconstructed images per client, aggregated data CSVs and bar plots are generated in `$SHATTER_HOME/artifact_scripts/gradientInversion/rog/experiments/lenet`.
+For Experiment 1, run the following command:
+```shell
+$SHATTER_HOME/artifact_scripts/gradientInversion/rog/run.sh
+```
+This should take ~15 minutes and about 30 MBs of space because of reconstructed images.
+Reconstructed images per client, aggregated data CSVs and bar plots are generated in `$SHATTER_HOME/artifact_scripts/gradientInversion/rog/experiments/lenet`.
+
+Some additional details:
 - VNodes{k} is Shatter with k virtual nodes.
 - The reconstructed images and lpips scores can be compared to Figures 2 and 8. Furthermore, lpips_bar_plot.png is analogous to Figure 7(d). You can ignore other metrics like `snr` and `ssim`. LPIPS will not be exact numbers in the paper since only 1 client was attacked as opposed to 100 in the experiments in the paper.
 - We recommend clearing up `artifact_scripts/gradientInversion/rog/experiments/lenet` before running other experiments to save disk space.
+- If you get a `ModuleNotFoundError`, verify the conda environment `venv` is active and you followed the steps in the [Setting up the Environment Section](#set-up-the-environment-only-for-functional-and-reproduced-badges).
 
 #### Experiment 2: Convergence, MIA and LA
-- These experiments are smaller scale versions of the other experiments in the paper since the full-scale experiments take very long and need to be run across 25 machines.
-- Easiest way is to execute `$SHATTER_HOME/artifact_scripts/small_scale/run_all`. This runs the experiments for all the datasets in one go. To do this step by step, one can also individually run the scripts for each dataset in `$SHATTER_HOME/artifact_scripts/small_scale`. Experiments with CIFAR-10 and Movielens datasets should take ~1.5 hour and ~200MBs in disk space each. Twitter dataset experiments take a bit longer and can take ~2.5 hours and ~200 MBs. In total `run_all` should run in ~5.5 hours and ~600MBs of disk space.
-- Inside `$SHATTER_HOME/artifact_scripts/small_scale/CIFAR10`, the aggregated CSVs for each baseline can be found: `*test_acc.csv` (Figure 3, 5, 7 all except Movielens), `*test_loss.csv` (Figure 3, 5, 7 Movielens), `*clients_linkability.csv` (Figure 6), `*clients_MIA.csv` (Figure 6), `*iterations_linkability.csv` (Partially Figure 7c), and `*iterations_MIA.csv` (Figure 5). PDFs for the plots with all baselines together (not exactly the ones in the paper, but same figures as the CSVs) are also created in the same folders. Since these are smaller scale experiments, the values will not match the ones in the paper.
+These experiments are smaller scale versions of the other experiments in the paper since the full-scale experiments take very long and need to be run across 25 machines. To run experiment 2, execute the following command:
+```shell
+$SHATTER_HOME/artifact_scripts/small_scale/run_all.sh
+```
+This runs the experiments for all the datasets in one go.
+
+To do this step by step, one can also individually run the scripts for each dataset in `$SHATTER_HOME/artifact_scripts/small_scale`.
+
+Experiments with CIFAR-10 and Movielens datasets should take ~1.5 hour and ~200MBs in disk space each. Twitter dataset experiments take a bit longer and can take ~2.5 hours and ~200 MBs. In total `run_all.sh` should run in ~5.5 hours and ~600MBs of disk space.
+Inside `$SHATTER_HOME/artifact_scripts/small_scale/CIFAR10`, the aggregated CSVs for each baseline can be found: `*test_acc.csv` (Figure 3, 5, 7 all except Movielens), `*test_loss.csv` (Figure 3, 5, 7 Movielens), `*clients_linkability.csv` (Figure 6), `*clients_MIA.csv` (Figure 6), `*iterations_linkability.csv` (Partially Figure 7c), and `*iterations_MIA.csv` (Figure 5). PDFs for the plots with all baselines together (not exactly the ones in the paper, but same figures as the CSVs) are also created in the same folders. Since these are smaller scale experiments, the values will not match the ones in the paper.
+
+Things to watch out for:
 - If CUDA OOM is encountered, try lowering the `test_batch_size` and `batch_size` in `config*.ini` within each dataset and baseline folder. One such `config` file is `$SHATTER_HOME/artifact_scripts/small_scale/CIFAR10/EL/config_EL.ini`
 - If the experiments look like they are in a deadlock, check the corresponding log files in the running dataset/baseline. If nothing has been logged for some time and it does not say that the experiment has been completed, check the CPU utilization and DRAM usage. It is likely a DRAM out-of-memory problem. The experiments would likely take up more DRAM. If a larger machine is unavailable, try disabling (commenting out) `Muffliato` experiments in the run scripts.
+- If you get a `ModuleNotFoundError`, verify the conda environment `venv` is active and you followed the steps in the [Setting up the Environment Section](#set-up-the-environment-only-for-functional-and-reproduced-badges).
 
 #### Copying results back from Docker
 We provided `docker-copy-exp-1.sh` and `docker-copy-exp-2.sh` to copy the results from the docker containers to the subfolders.

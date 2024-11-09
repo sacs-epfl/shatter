@@ -1,5 +1,16 @@
 #!/bin/bash
 
+set -euxo pipefail
+
+# Check if the 'conda' command is available
+if ! command -v conda &> /dev/null; then
+    echo "Activating Conda"
+    source ${CONDA_PREFIX}/bin/activate
+fi
+
+conda activate venv
+
+
 num_clients=1
 
 # Compute the results
